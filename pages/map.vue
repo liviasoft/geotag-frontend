@@ -90,8 +90,8 @@
           </v-list-item>
         </v-list>
       </v-menu> -->
-      <LMap :zoom="6" style="z-index: 1; position: relative" :center="[47.21322, -1.559482]"
-        @contextmenu="show">
+      <LMap :zoom="6" style="z-index: 1; position: relative" :center="[9.064126766278864, 7.4935340881347665]"
+        @contextmenu="show" @click="mapClick">
         <v-menu :target="[x, y]"
           v-model="showMenu" transition="slide-x-transition" :close-on-content-click="false">
           <v-list density="compact" slim>
