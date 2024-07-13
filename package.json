@@ -16,9 +16,14 @@
     "release:major": "standard-version --release-as major"
   },
   "dependencies": {
+    "@neoncoder/validator-utils": "^0.0.11",
     "@neoncoder/vuetify-sonner": "^0.3.18",
     "@pinia/nuxt": "^0.5.1",
+    "@vueuse/components": "^10.11.0",
+    "@vueuse/core": "^10.11.0",
     "@vueuse/nuxt": "^10.9.0",
+    "change-case": "^5.4.4",
+    "leaflet.markercluster": "^1.5.3",
     "nuxt": "^3.11.2",
     "nuxt3-leaflet": "^1.0.12",
     "pinia": "^2.1.7",

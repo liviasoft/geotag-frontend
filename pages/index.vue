@@ -8,11 +8,11 @@
 
   //   return structuredClone(records);
   // })
-
 </script>
 
 <template>
   <div>
+    <HomePageBanner />
     <p>This is the index page</p>
     <pre>
       {{ data }}
