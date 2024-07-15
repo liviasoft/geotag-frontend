@@ -11,14 +11,14 @@
 </script>
 
 <template>
-  <div class="pa-4 text-center">
-    <v-btn
+  <div>
+    <!-- <v-btn
       :disabled="globalLoader"
       color="primary"
       icon="mdi-refresh"
       text="Start loading"
       @click="globalLoader = !globalLoader"
-    ></v-btn>
+    ></v-btn> -->
 
     <v-dialog
       v-model="globalLoader"

@@ -9,6 +9,7 @@ import { toast } from '@neoncoder/vuetify-sonner'
 import L from 'leaflet';
 import { useDisplay } from 'vuetify';
 import type { SavedLocation } from '../types/Locations.types';
+import MapSettingsNav from '~/components/MapPage/MapSettingsNav.vue';
 
 const {xs} = useDisplay();
 const config = useRuntimeConfig();
@@ -90,8 +91,21 @@ const items = ref([
 // When the map is ready
 function onMapReady () {
     // Access the Leaflet map instance
-    // console.log(map?.value?.leafletObject)
+    console.log(map?.value?.leafletObject)
     console.log('Map Ready')
+}
+
+function changePerspective({lat, lng, zoom = 10, select = false}: {lat: number, lng: number, zoom?: number, select?: boolean}){
+  mapCenter.value = [lat, lng];
+  console.log({map: map.value?.leafletObject})
+  setTimeout(() => {
+    mapZoom.value = zoom
+    if(select){ 
+      selectedLocation.value = {lat, lng}
+    } else {
+      selectedLocation.value = undefined
+    }
+  }, 200);
 }
 
 const mapCenter = ref<L.PointExpression>([9.054803167454951, 7.483062744140626])
@@ -209,8 +223,8 @@ async function moveToUserLocation() {
     mapCenter.value = [lat, lng]
     userLocation.value = [lat, lng];
     setTimeout(() => {
-      mapZoom.value = 9
-    }, 500);
+      mapZoom.value = 15
+    }, 800);
     console.log("Move to user location");
     console.log({result});
   }
@@ -459,7 +473,14 @@ async function handleLocationCreated(){
       </v-navigation-drawer>
     </div>
     <v-navigation-drawer :style="{minWidth: xs && mapSettingsNav ? '90vw':'auto'}" location="right" :disable-resize-watcher="true" :disable-route-watcher="true" v-model="mapSettingsNav">
-      <!--  -->
+      <div>
+        <p :key="mapZoom">{{ mapZoom }}</p>
+      </div>
+      <MapSettingsNav 
+        @update:selected-city="(e) => changePerspective({lat: e?.latitude || 0, lng: e?.longitude || 0, zoom: 12, select: Boolean(true)})"
+        @update:selected-state="(e) => changePerspective({lat: e?.latitude || 0, lng: e?.longitude || 0, zoom: 9})"
+        @update:selected-country="(e) => changePerspective({lat: e?.latitude || 0, lng: e?.longitude || 0, zoom: 6})"
+      />
     </v-navigation-drawer>
   </UseFullscreen>
 </template>

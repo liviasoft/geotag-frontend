@@ -1,22 +1,3 @@
-export type City = {
-  id: number;
-  name: string;
-  state_id: number;
-  state_code: string;
-  state_name: string;
-  country_id: number;
-  country_code: string;
-  country_name: string;
-  latitude: number;
-  longitude: number;
-}
-
-export type NearbyCity = City & {
-  unitInWords: unknown;
-  unit: unknown;
-  distance: unknown;
-}
-
 export type CountryCode = {
   id: string;
   name: string;
@@ -71,3 +52,54 @@ export type SavedLocation = {
 }
 
 export type DynamicCustomFieldType = keyof typeof CUSTOM_FIELD_TYPE
+
+export type Country = {
+  id: number;
+  name: string;
+  iso3: string;
+  iso2: string;
+  numeric_code: string;
+  phone_code: string;
+  capital: string;
+  currency: string;
+  currency_name: string;
+  currency_symbol: string;
+  tld: string;
+  native: string;
+  region_id: number;
+  subregion_id: number;
+  nationality: string;
+  latitude: number;
+  longitude: number;
+}
+
+export type State = {
+  id: number;
+  name: string;
+  latitude: number;
+  longitude: number;
+  country_id: number;
+  country_code: string;
+  country_name: string;
+  state_code: string;
+  type: string | null;
+}
+
+export type City = {
+  id: number;
+  name: string;
+  state_id: number;
+  state_code: string;
+  state_name: string;
+  country_id: number;
+  country_code: string;
+  country_name: string;
+  latitude: number;
+  longitude: number;
+}
+
+export type NearbyCity = City & {
+  unitInWords: unknown;
+  unit: unknown;
+  distance: unknown;
+}

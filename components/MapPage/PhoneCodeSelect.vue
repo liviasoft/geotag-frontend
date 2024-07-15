@@ -82,7 +82,7 @@
         class="mx-0 mt-1"
         link
         label
-        append-icon="mdi-chevron-down"
+        
       >
         <v-avatar start size="32px" tile>
           <v-img v-if="selectedCountryCode" :src="`/icons/flags/32x32/${selectedCountryCode?.iso2.toLowerCase()}.png`"></v-img>
@@ -91,6 +91,9 @@
 
         <span v-if="selectedCountryCode">{{ selectedCountryCode?.iso3 }} ({{ selectedCountryCode?.phone_code?.charAt(0) === '+' ? '': '+' }}{{ selectedCountryCode?.phone_code }})</span>
         <span v-else> Phone Code</span>
+        <!-- <template #appendIcon> -->
+        <v-icon class="px-2">mdi-chevron-down</v-icon>
+        <!-- </template> -->
       </v-chip>
     </template>
     <v-card

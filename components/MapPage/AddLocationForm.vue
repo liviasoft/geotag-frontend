@@ -28,7 +28,7 @@
   const port = ref<number>(9001)
   const ipAddress = ref<string>('192.168.1.1')
   const deviceData = ref<{[key:string]: string | number | boolean}>({})
-  watch([port, ipAddress], ([newPort], [newIpAddress]) => {
+  watch([port, ipAddress], ([newPort, newIpAddress]) => {
     if(errors.value.port && newPort) errors.value.port = false
     if(errors.value.ipAddress && newIpAddress) errors.value.ipAddress = false
   })
@@ -109,6 +109,10 @@
       toast.error('Location Name is required');
       errors.value.name = true;
     }
+    if(!/^[a-z]+$/i.test(name.value.slice(-1))){
+      toast.error('Name should end with an alphabet')
+      errors.value.name = true;
+    }
     if(locationIsDevice.value){
       if(!ipAddress.value){
         toast.error('Device IP address is required');
@@ -158,6 +162,24 @@
       Add New Location</v-card-title>
     <v-divider></v-divider>
     <v-card-text style="max-height: calc(98vh - 164px); overflow-y: scroll; min-height: calc(80vh - 164px);">
+      <h4>Basic Details</h4>
+      <v-divider class="mb-3"></v-divider>
+      <v-text-field hint="Name should end with an alphabet" :error="errors.name" v-model="name" @keydown.enter="addLocation" @input="() => { if (errors.name) errors.name = false }" autofocus placeholder="e.g. Site 001-ABC" density="compact" variant="outlined" hide-details class="mb-2">
+        <template #label>
+          <p class="mb-0">Name <span class="text-error">*</span></p>
+        </template>
+      </v-text-field>
+      <ClosestCitySelect :lat="location.lat" :lng="location.lng" v-model:selectedNearbyCity="nearbyCity"/>
+      <v-text-field v-model="address" @keydown.enter="addLocation" hide-details class="mb-2" density="compact" placeholder="House No, Street, District" variant="outlined" :rows="1">
+        <template #label>
+          <p class="mb-0">Address <small>(optional)</small></p>
+        </template>
+      </v-text-field>
+      <v-text-field v-model="description" @keydown.enter="addLocation" hide-details class="mb-2" density="compact" placeholder="Any additional details" variant="outlined" :rows="1">
+        <template #label>
+          <p class="mb-0">Description <small>(optional)</small></p>
+        </template>
+      </v-text-field>
       <h4>Location info</h4>
       <v-divider class="mb-3"></v-divider>
       <LatLngFields :location="location" @update:latlng="latlngUpdate"/>
@@ -167,24 +189,6 @@
           <DeviceDetailsForm v-model:ip-address="ipAddress" v-model:port="port" @update:custom-field="updateDeviceCustomField" @delete:custom-field="deleteDeviceCustomField" :ip-address-error="errors.ipAddress" :port-error="errors.port" />
         </div>
       </v-expand-transition>
-      <h4>Basic Details</h4>
-      <v-divider class="mb-3"></v-divider>
-      <v-text-field :error="errors.name" v-model="name" @keydown.enter="addLocation" @input="() => { if (errors.name) errors.name = false }" autofocus placeholder="e.g. Site ABC-001" density="compact" variant="outlined" hide-details class="mb-2">
-        <template #label>
-          <p class="mb-0">Name <span class="text-error">*</span></p>
-        </template>
-      </v-text-field>
-      <ClosestCitySelect :lat="location.lat" :lng="location.lng" v-model:selectedNearbyCity="nearbyCity"/>
-      <v-textarea v-model="address" @keydown.enter="addLocation" hide-details class="mb-2" density="compact" placeholder="Any additional details" variant="outlined" :rows="2">
-        <template #label>
-          <p class="mb-0">Address <small>(optional)</small></p>
-        </template>
-      </v-textarea>
-      <v-textarea v-model="description" @keydown.enter="addLocation" hide-details class="mb-2" density="compact" placeholder="Any additional details" variant="outlined" :rows="2">
-        <template #label>
-          <p class="mb-0">Description <small>(optional)</small></p>
-        </template>
-      </v-textarea>
       <ContactDetailsSelect v-model:selected-contacts="selectedContacts" />
     </v-card-text>
     <v-overlay
