@@ -118,14 +118,15 @@
     }
   }
   async function locationSelected(e: any){
-    console.log({e, selectedLocation})
-    await navigateTo({
-      path: '/map',
-      query: {
-        lat: selectedLocation.value?.latitude,
-        lng: selectedLocation.value?.longitude,
-      }
-    })
+    console.log({e})
+    // await navigateTo({
+    //   path: `/map?lat=${selectedLocation.value?.latitude}&lng=${selectedLocation.value?.longitude}`,
+    //   query: {
+    //     lat: selectedLocation.value?.latitude,
+    //     lng: selectedLocation.value?.longitude,
+    //   }
+    // })
+    await navigateTo(`/map?lat=${e.latitude}&lng=${e.longitude}`)
   }
 // watch(keyword, (v) => {
 //   // clearTimeout(timerId)

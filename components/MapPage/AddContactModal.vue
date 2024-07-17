@@ -12,10 +12,14 @@
   const name = ref('');
   const email = ref('');
   const phoneCode = computed(() => {
-    return countryCode.value ? countryCode.value.phone_code : ''
+    return countryCode.value ? countryCode.value.iso2 : ''
   })
   const phone = ref('');
   const emit = defineEmits(['update:contactCreated'])
+  const errors = ref({
+    email: '',
+    phone: '',
+  })
   function reset(){
       address.value = ''
       name.value = ''
@@ -23,6 +27,10 @@
       phone.value = ''
       dialog.value = false;
       countryCode.value = undefined
+      errors.value = {
+        email: '',
+        phone: ''
+      }
   }
   async function addNewContact(){
     if(loading.value) return;
@@ -47,6 +55,8 @@
       console.log({response});
       if(!response.success) {
         toast.error(response.message)
+        if (response.error?.email) errors.value.email = response.error.email
+        if (response.error?.phone) errors.value.phone = response.error.phone
       } else {
         toast.success(response.message)
         reset()
@@ -84,14 +94,14 @@
       <v-card-title class="bg-primary text-white d-flex align-center"><v-icon class="mr-2">mdi-account-box</v-icon><p>Add New Contact</p><v-spacer></v-spacer> <v-btn @click="reset" icon="mdi-close" size="small" variant="text"></v-btn></v-card-title>
       <v-card-text class="pb-0">
         <v-text-field @keydown.enter="addNewContact" v-model="name" autofocus placeholder="John Doe" class="mb-2" label="Contact Name" variant="outlined" density="compact" hide-details></v-text-field>
-        <v-text-field @keydown.enter="addNewContact" v-model="email" placeholder="personorcompany@example.com" type="email" class="mb-2" label="Email" variant="outlined" density="compact" hide-details></v-text-field>
+        <v-text-field @keydown.enter="addNewContact" :error="Boolean(errors.email)" @focus="errors.email = ''" v-model="email" placeholder="personorcompany@example.com" type="email" class="mb-2" label="Email" variant="outlined" density="compact" hide-details></v-text-field>
         <v-text-field @keydown.enter="addNewContact" v-model="address" placeholder="Floor No, Building No, Street, District" type="text" class="mb-2" label="Street Address" variant="outlined" density="compact" hide-details></v-text-field>
         <v-row>
           <v-col cols="4" class="flex-grow-1 flex-shrink-0 pr-0">
             <LazyPhoneCodeSelect @update:selected-country-code="countryCodeSelected" :selected-country-code="countryCode" />
           </v-col>
           <v-col cols="8" class="flex-shrink-1 flex-grow-0">
-            <v-text-field v-model="phone" @keydown.enter="addNewContact" placeholder="08012345678" type="text" class="mb-2" label="Phone Number" variant="outlined" density="compact" hide-details></v-text-field>
+            <v-text-field v-model="phone" :error="Boolean(errors.phone)" @focus="errors.phone=''" @keydown.enter="addNewContact" placeholder="08012345678" type="text" class="mb-2" label="Phone Number" variant="outlined" density="compact" hide-details></v-text-field>
           </v-col>
         </v-row>
       </v-card-text>
