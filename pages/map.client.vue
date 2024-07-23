@@ -8,7 +8,7 @@ import { ref, onMounted, computed } from "vue";
 import { toast } from '@neoncoder/vuetify-sonner'
 import L from 'leaflet';
 import { useDisplay } from 'vuetify';
-import type { SavedLocation } from '../types/Locations.types';
+import type { LocationType, SavedLocation } from '../types/Locations.types';
 import MapSettingsNav from '~/components/MapPage/MapSettingsNav.vue';
 
 const {xs} = useDisplay();
@@ -229,7 +229,7 @@ async function moveToUserLocation() {
     console.log({result});
   }
 }
-const selectedLocationType = ref<{id: string, name: string, description: string, icon: string, iconUrl: string} | undefined>(undefined)
+const selectedLocationType = ref<LocationType | undefined>(undefined)
 function updateSelectedLocationType(e: any){
   console.log({e});
   selectedLocationType.value = e;
@@ -389,7 +389,7 @@ async function handleLocationCreated(){
               </v-list-item>
             </v-list>
           </v-menu>
-          <!-- <LTileLayer
+          <LTileLayer
             url="https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.jpg"
             attribution="<a href='https://memomaps.de/'>memomaps.de</a> <a href='http://creativecommons.org/licenses/by-sa/2.0/'>CC-BY-SA</a>, map data &copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
             layer-type="base"
@@ -406,7 +406,7 @@ async function handleLocationCreated(){
             attribution="<a href='https://memomaps.de/'>memomaps.de</a> <a href='http://creativecommons.org/licenses/by-sa/2.0/'>CC-BY-SA</a>, map data &copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
             layer-type="base"
             name="Stadia.Dark"
-            /> -->
+            />
           <LTileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution="&amp;copy; <a href=&quot;https://www.openstreetmap.org/&quot;>OpenStreetMap</a> contributors"

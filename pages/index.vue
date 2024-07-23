@@ -13,9 +13,9 @@
 <template>
   <div>
     <HomePageBanner />
-    <p>This is the index page</p>
+    <!-- <p>This is the index page</p>
     <pre>
       {{ data }}
-    </pre>
+    </pre> -->
   </div>
 </template>

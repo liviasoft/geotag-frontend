@@ -2,13 +2,12 @@
   <v-img
     src="/images/HomeBannerBackground.webp"
     cover
-    height="100vh"
+    height="calc(100vh - 64px)"
     gradient="to bottom, rgba(0,0,0,.5), rgba(0,0,0,.6)"
   >
     <!-- Content centered vertically and horizontally -->
     <v-row
       class="fill-height ma-0"
-      align="top"
       justify="center"
     >
       <v-col cols="12" sm="8" md="6">

@@ -1,10 +1,10 @@
 <script lang="ts" setup>
   import LazyPhoneCodeSelect from './PhoneCodeSelect.vue';
   import {ref, computed} from 'vue';
-  import { toast } from '@neoncoder/vuetify-sonner';
   import type { CountryCode } from '~/types/Locations.types';
-  const config = useRuntimeConfig();
-  const apiBaseUrl = config.public.API_BASE_URL;
+
+  const authStore = useAuthStore();
+
   const countryCode = ref<CountryCode | undefined>(undefined)
   const dialog = ref(false);
   const loading = ref(false);
@@ -35,9 +35,6 @@
   async function addNewContact(){
     if(loading.value) return;
     console.log({address, name, email, phoneCode, dialog, phone});
-    const url = computed(() => {
-      return new URL(`${apiBaseUrl}/api/v1/settings/contacts`).href
-    })
     const data = {
       address: address.value,
       email: email.value,
@@ -48,28 +45,18 @@
     console.log({data})
     try {
       loading.value = true;
-      const res = await fetch(url.value, { method: 'POST', headers: {
-    'Content-Type': 'application/json'
-  }, body: JSON.stringify(data)})
-      const response = await res.json()
+      const {response} = await authStore.makeAuthenticatedRequest({url: 'api/v1/settings/contacts', method: 'POST', data})
       console.log({response});
       if(!response.success) {
-        toast.error(response.message)
         if (response.error?.email) errors.value.email = response.error.email
         if (response.error?.phone) errors.value.phone = response.error.phone
       } else {
-        toast.success(response.message)
         reset()
         emit('update:contactCreated')
         dialog.value = false;
       }
     } catch (error: any) {
       console.log({error});
-      if (error.response){
-        toast.error(error.response?.message)
-      } else {
-        toast.error(error.message)
-      }
     } finally {
       loading.value = false
     }

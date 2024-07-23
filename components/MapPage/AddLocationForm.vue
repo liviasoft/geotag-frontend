@@ -9,13 +9,12 @@
   import ContactDetailsSelect from './ContactDetailsSelect.vue';
   import { toast } from '@neoncoder/vuetify-sonner';
 
-  const config = useRuntimeConfig();
-  const apiBaseUrl = config.public.API_BASE_URL;
+  const authStore = useAuthStore();
 
   const props = defineProps({
     locationType: {
       type: Object,
-      default: () => ({})
+      // default: () => ({})
     },
     location: {
       type: Object,
@@ -78,7 +77,7 @@
     description.value = ''
     deviceData.value = {}
     selectedContacts.value = []
-    emit('update:locationType')
+    emit('update:locationType', undefined)
   }
   async function addLocation(){
     if(loading.value) return;
@@ -109,10 +108,6 @@
       toast.error('Location Name is required');
       errors.value.name = true;
     }
-    if(!/^[a-z]+$/i.test(name.value.slice(-1))){
-      toast.error('Name should end with an alphabet')
-      errors.value.name = true;
-    }
     if(locationIsDevice.value){
       if(!ipAddress.value){
         toast.error('Device IP address is required');
@@ -128,27 +123,14 @@
     }
     try {
       loading.value = true;
-      const url = (new URL(`${apiBaseUrl}/api/v1/locations/sites`)).href
-      const res = await fetch(url, {
-        method: 'POST', 
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-      })
-      const {success, message} = await res.json()
+      const {response} = await authStore.makeAuthenticatedRequest({url: 'api/v1/locations/sites', method: 'POST', data})
+      const {success} = response
       if(success){
-        toast.success(message);
         reset()
         emit('update:locationCreated')
-      } else {
-        toast.error(message);
       }
-      // console.log({response})
-      // if(response)
     } catch (error: any) {
       console.log({error})
-      toast.error(error.message)
     } finally {
       loading.value = false
     }
@@ -164,7 +146,7 @@
     <v-card-text style="max-height: calc(98vh - 164px); overflow-y: scroll; min-height: calc(80vh - 164px);">
       <h4>Basic Details</h4>
       <v-divider class="mb-3"></v-divider>
-      <v-text-field hint="Name should end with an alphabet" :error="errors.name" v-model="name" @keydown.enter="addLocation" @input="() => { if (errors.name) errors.name = false }" autofocus placeholder="e.g. Site 001-ABC" density="compact" variant="outlined" hide-details class="mb-2">
+      <v-text-field hint="Name should end with an alphabet" :error="errors.name" v-model.trim="name" @keydown.enter="addLocation" @input="() => { if (errors.name) errors.name = false }" autofocus placeholder="e.g. Site 001-ABC" density="compact" variant="outlined" hide-details class="mb-2">
         <template #label>
           <p class="mb-0">Name <span class="text-error">*</span></p>
         </template>
@@ -183,7 +165,7 @@
       <h4>Location info</h4>
       <v-divider class="mb-3"></v-divider>
       <LatLngFields :location="location" @update:latlng="latlngUpdate"/>
-      <LocationTypeSelect @update:selectedLocationType="locationTypeUpdate" :error="errors.locationType" />
+      <LocationTypeSelect @update:selectedLocationType="locationTypeUpdate" :error="errors.locationType" :selected-location-type="locationType" />
       <v-expand-transition>
         <div v-show="locationIsDevice">
           <DeviceDetailsForm v-model:ip-address="ipAddress" v-model:port="port" @update:custom-field="updateDeviceCustomField" @delete:custom-field="deleteDeviceCustomField" :ip-address-error="errors.ipAddress" :port-error="errors.port" />

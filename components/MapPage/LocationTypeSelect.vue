@@ -1,8 +1,10 @@
 <script lang="ts" setup>
   import * as changeCase from "change-case";
+  import { watch } from "vue";
   const config = useRuntimeConfig();
   const apiBaseUrl = config.public.API_BASE_URL;
   const locationTypeOptions = ref([])
+  const locationTypeSelectInput = ref<any>(null)
   const compProps = defineProps({
     selectedLocationType: {
       type: Object,
@@ -11,6 +13,12 @@
     error: {
       type: Boolean,
       default: false
+    }
+  })
+  watch(() => compProps.selectedLocationType, (newValue) => {
+    console.log('changed', newValue)
+    if(!newValue) {
+      locationTypeSelectInput.value.reset()
     }
   })
   const emit = defineEmits(['update:selectedLocationType'])
@@ -28,7 +36,7 @@
 
 <template>
   <div>
-    <v-select :error="error" :items="locationTypeOptions" clearable return-object @update:modelValue="(e: string) => emit('update:selectedLocationType', e)" item-value="id" label="Location Type" variant="solo" single-line density="compact" hide-details class="mb-2">
+    <v-select ref="locationTypeSelectInput" :error="error" placeholder="Select Location Type" :items="locationTypeOptions" :value="compProps.selectedLocationType?.id" clearable return-object @update:modelValue="(e: string) => emit('update:selectedLocationType', e)" item-value="id" label="Location Type" variant="solo" single-line density="compact" hide-details class="mb-2">
       <template #item="{ props, item }">
         <v-list-item v-bind="props" :title="changeCase.capitalCase(item.raw.name)">
           <template #prepend>

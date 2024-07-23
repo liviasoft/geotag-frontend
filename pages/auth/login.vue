@@ -4,8 +4,11 @@
   import type { CountryCode } from '~/types/Locations.types';
   import { toast } from '@neoncoder/vuetify-sonner';
   import { isValidEmail } from '@neoncoder/validator-utils';
+
+  const authStore = useAuthStore()
   const config = useRuntimeConfig();
   const apiBaseUrl = config.public.API_BASE_URL;
+
   const items = ref<Array<string>>(['Email', 'Phone'])
   const tab = ref('Email')
   const successMessages = ref<Array<string>>([])
@@ -13,7 +16,9 @@
     emailOrUsername: '',
     password: '',
     phone: '',
+    phoneCode: ''
   })
+
   const {query} = useRoute()
   console.log({query})
   if(query.new){
@@ -24,32 +29,37 @@
       tab.value = query.method as string
     }
   }
+
   const countryCode = ref<CountryCode | undefined>(undefined)
   const phoneCode = computed(() => {
-    return countryCode.value ? countryCode.value.phone_code : ''
+    return countryCode.value ? countryCode.value.iso2 : ''
   })
   const emailOrUsername = ref('')
   const password = ref('')
   const phone = ref('')
   const showPassword = ref(false)
   const loading = ref(false)
+
   function reset(){
     emailOrUsername.value = ''
     phone.value = ''
     password.value = ''
     showPassword.value = false
   }
+
   function clearMessages(timeout = 5000){
     setTimeout(() => {
       errors.value = {
         emailOrUsername: '',
         phone: '',
-        password: ''
+        password: '',
+        phoneCode: ''
       }
       successMessages.value = []
       countryCode.value = undefined
     }, timeout);
   }
+
   async function signin(){
     if(loading.value) return;
     const data = {
@@ -59,39 +69,37 @@
       phoneCode: phoneCode.value,
       password: password.value
     }
+    let type: 'Email' | 'Username' | 'Phone'
     let url = ''
     if (tab.value === 'Email') {
       if(isValidEmail(data.email)){
         url = new URL(`${apiBaseUrl}/api/v1/auth/login/email`).href
+        type = 'Email'
       } else {
         url = new URL(`${apiBaseUrl}/api/v1/auth/login/username`).href
+        type = 'Username'
       }
     } else {
       url = new URL(`${apiBaseUrl}/api/v1/auth/login/phone`).href
+      type = 'Phone'
     }
     console.log({data})
     try {
       loading.value = true;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-      })
-      const response = await res.json()
+      const {response, error} = await authStore.login(data, type)
       console.log({response});
       if(response.success){
         toast.success(response.message)
-        successMessages.value.push('Login Successful - Welcome back')
-        // await navigateTo('/auth/login?new=true')
+        successMessages.value.push(`Login Successful - Welcome back ${response.data.user.username}`)
         reset()
         clearMessages()
+        await navigateTo('/map')
       } else {
         toast.error(response.message)
         if(response.error){
           errors.value.emailOrUsername = response.error.email
           errors.value.phone = response.error.phone
+          errors.value.phoneCode = response.error.phoneCode
           errors.value.emailOrUsername = response.error.username
           errors.value.password = response.error.password
         }
