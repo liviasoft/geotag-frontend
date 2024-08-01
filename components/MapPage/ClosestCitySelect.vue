@@ -2,8 +2,9 @@
   import { ref, defineModel } from 'vue';
   import { watchDebounced } from '@vueuse/core';
   import type { NearbyCity } from '~/types/Locations.types';
-  const config = useRuntimeConfig();
-  const apiBaseUrl = config.public.API_BASE_URL;
+  const authStore = useAuthStore();
+  // const config = useRuntimeConfig();
+  // const apiBaseUrl = config.public.API_BASE_URL;
   const selectedNearbyCity = defineModel('selectedNearbyCity')
   const props = defineProps({
     lat: {
@@ -17,16 +18,19 @@
   })
   const nearestCities = ref<Array<NearbyCity>>([])
   const loading = ref(false);
+  // const url = computed(() => {
+  //   return new URL(`${apiBaseUrl}/api/v1/locations/nearest-cities?lat=${props.lat}&lng=${props.lng}&limit=10`).href
+  // })
   const url = computed(() => {
-    return new URL(`${apiBaseUrl}/api/v1/locations/nearest-cities?lat=${props.lat}&lng=${props.lng}&limit=10`).href
+    return `api/v1/locations/nearest-cities?lat=${props.lat}&lng=${props.lng}&limit=10`
   })
   const query = async () => {
     if (loading.value) return;
     loading.value = true;
     try {
       
-      const res = await fetch(url.value);
-      const {data: {cities}} = await res.json();
+      // const {res} = await fetch(url.value);
+      const {response: {data: {cities}}} = await authStore.makeAuthenticatedRequest({url: url.value});
       console.log({sample: cities[0]})
       nearestCities.value = cities;
       emit('update:selectedNearbyCity', cities[0])

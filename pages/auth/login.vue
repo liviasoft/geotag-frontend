@@ -106,6 +106,19 @@
       }
     } catch (error: any) {
       console.log({error});
+      const {response} = error
+      if(response){
+        toast.error(response.message)
+        if(response.error){
+          errors.value.emailOrUsername = response.error.email
+          errors.value.phone = response.error.phone
+          errors.value.phoneCode = response.error.phoneCode
+          errors.value.emailOrUsername = response.error.username
+          errors.value.password = response.error.password
+        }
+      } else {
+        toast.error(error.message)
+      }
     } finally {
       loading.value = false;
     }

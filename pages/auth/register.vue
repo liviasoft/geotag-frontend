@@ -106,7 +106,18 @@
       }
     } catch (error: any) {
       console.log({error});
-      toast.error(error.message)
+      const {response} = error
+      if(response){
+        toast.error(response.message)
+        if(response.error){
+          errors.value.email = response.error.email
+          errors.value.phone = response.error.phone
+          errors.value.username = response.error.username
+          errors.value.phoneCode = response.error.phoneCode
+        }
+      } else {
+        toast.error(error.message)
+      }
     } finally {
       loading.value = false
       console.log({ errors: errors.value})

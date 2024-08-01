@@ -17,7 +17,7 @@
       />
     </v-card-text>
     <div>
-      <h2>Map Settings</h2>
+      <!-- <h2>Map Settings</h2> -->
     </div>
   </v-card>
 </template>

@@ -144,6 +144,10 @@
       Add New Location</v-card-title>
     <v-divider></v-divider>
     <v-card-text style="max-height: calc(98vh - 164px); overflow-y: scroll; min-height: calc(80vh - 164px);">
+      <h4>Location info</h4>
+      <v-divider class="mb-3"></v-divider>
+      <LocationTypeSelect @update:selectedLocationType="locationTypeUpdate" :error="errors.locationType" :selected-location-type="locationType" />
+      <LatLngFields :location="location" @update:latlng="latlngUpdate"/>
       <h4>Basic Details</h4>
       <v-divider class="mb-3"></v-divider>
       <v-text-field hint="Name should end with an alphabet" :error="errors.name" v-model.trim="name" @keydown.enter="addLocation" @input="() => { if (errors.name) errors.name = false }" autofocus placeholder="e.g. Site 001-ABC" density="compact" variant="outlined" hide-details class="mb-2">
@@ -162,10 +166,6 @@
           <p class="mb-0">Description <small>(optional)</small></p>
         </template>
       </v-text-field>
-      <h4>Location info</h4>
-      <v-divider class="mb-3"></v-divider>
-      <LatLngFields :location="location" @update:latlng="latlngUpdate"/>
-      <LocationTypeSelect @update:selectedLocationType="locationTypeUpdate" :error="errors.locationType" :selected-location-type="locationType" />
       <v-expand-transition>
         <div v-show="locationIsDevice">
           <DeviceDetailsForm v-model:ip-address="ipAddress" v-model:port="port" @update:custom-field="updateDeviceCustomField" @delete:custom-field="deleteDeviceCustomField" :ip-address-error="errors.ipAddress" :port-error="errors.port" />

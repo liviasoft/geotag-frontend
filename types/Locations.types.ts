@@ -1,3 +1,5 @@
+import type { User } from "./user.types";
+
 export type CountryCode = {
   id: string;
   name: string;
@@ -33,6 +35,15 @@ export type LocationType = {
   iconUrl: string;
   created: Date;
   updated: Date;
+  _count?: {
+    locations: number
+  }
+}
+
+export type DeviceData = {
+  ipAddress: string;
+  port: number;
+  [key: string]: string | number | boolean
 }
 
 export type SavedLocation = {
@@ -44,11 +55,16 @@ export type SavedLocation = {
   description: string | null;
   locationType: string;
   city: City | null;
-  deviceData: object | null;
+  deviceData: DeviceData | null;
   additionalData: object | null;
   created: string;
   updated: string;
   locationTypeData?: LocationType;
+  addedBy?: Partial<User>,
+  image?: string,
+  imageUrl?: string,
+  connectionStatus?: string,
+  lastConnectionStatusCheck?: Date,
 }
 
 export type DynamicCustomFieldType = keyof typeof CUSTOM_FIELD_TYPE

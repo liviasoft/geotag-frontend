@@ -1,0 +1,1 @@
+export const GOLDEN_RATION = 1.618 as const

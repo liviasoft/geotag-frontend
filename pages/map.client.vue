@@ -1,33 +1,37 @@
 <script setup lang="ts">
 import AddLocationForm from '~/components/MapPage/AddLocationForm.vue';
 import LocationMarker from '~/components/MapPage/LocationMarker.vue';
+import LocationCard from '../components/MapPage/LocationCard.vue';
+import * as changeCase from "change-case";
 import { useSideNavStore } from '~/stores/sidenav';
+import { useLocationStore } from '~/stores/locations';
 import { UseFullscreen } from '@vueuse/components';
 import { storeToRefs } from 'pinia';
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { toast } from '@neoncoder/vuetify-sonner'
 import L from 'leaflet';
 import { useDisplay } from 'vuetify';
 import type { LocationType, SavedLocation } from '../types/Locations.types';
 import MapSettingsNav from '~/components/MapPage/MapSettingsNav.vue';
 
-const {xs} = useDisplay();
+const { xs, smAndDown } = useDisplay();
 const config = useRuntimeConfig();
 const apiBaseUrl = config.public.API_BASE_URL;
 
 const savedLocations = ref<Array<SavedLocation>>([])
 
-  async function getSavedLocations(){
-  if(globalLoader.value) return;
+async function getSavedLocations() {
+  if (globalLoader.value) return;
   const url = (new URL(`${apiBaseUrl}/api/v1/locations/sites`)).href
   try {
     globalLoader.value = true;
+    // await getLocationTypes();
     const res = await fetch(url)
-    const {data: {locations}} = await res.json()
-    console.log({locations})
+    const { data: { locations } } = await res.json()
+    console.log({ locations })
     savedLocations.value = locations;
   } catch (error: any) {
-    console.log({error})
+    console.log({ error })
   } finally {
     globalLoader.value = false
   }
@@ -36,6 +40,12 @@ const savedLocations = ref<Array<SavedLocation>>([])
 onMounted(() => {
   // console.log({ L })
   getSavedLocations()
+  getLocationTypes();
+})
+
+const filteredSavedLocations = computed(() => {
+  if (selectedLocationTypeFilter.value === 'all') return savedLocations.value
+  return savedLocations.value.filter(l => l.locationType === selectedLocationTypeFilter.value)
 })
 
 const mapModes = {
@@ -49,23 +59,30 @@ const mapModes = {
 type TMode = keyof typeof mapModes
 
 const mode = ref<TMode>('DEFAULT')
+const selectedLocationTypeFilter = ref<string>('all')
 
-function changeMode(newMode: TMode){
+function changeMode(newMode: TMode) {
   console.log(`Changing ${mode.value} => ${newMode}`)
   mode.value = newMode
 }
 
-function isCurrentMode(checkMode: TMode){
+function isCurrentMode(checkMode: TMode) {
   return mode.value === checkMode
 }
 
 const modeCursor = computed(() => {
-  return mode.value === 'DEFAULT' ? 'grab' : `url("icons/${mode.value.toLowerCase()}.png") ${mode.value === 'NEARBY' || mode.value === 'DISTANCE' ? '16 16': '0 0' } , auto`
+  return mode.value === 'DEFAULT' ? 'grab' : `url("icons/${mode.value.toLowerCase()}.png") ${mode.value === 'NEARBY' || mode.value === 'DISTANCE' ? '16 16' : '0 0'} , auto`
 })
 
 // #region Pinia Navbar logic
 const navStore = useSideNavStore()
 const { mapSettingsNav, formInputNav, globalLoader } = storeToRefs(navStore)
+const locationStore = useLocationStore()
+const { getLocationTypes } = locationStore
+const { locationTypes } = storeToRefs(locationStore)
+const highlightedLocation = ref<string | null>(null)
+const locationBrowser = ref(false)
+const model = ref(null)
 const { toggle } = navStore
 // #endregion Pinia Navbars logic
 const markers = ref<Array<L.LatLngTuple>>([])
@@ -76,7 +93,7 @@ const showMenu = ref(false); // For context menu
 const markLocation = ref(false);
 const x = ref(0);
 const y = ref(0);
-const selectedLocation = ref<{lat: number, lng: number, icon?: string} | undefined>(undefined)
+const selectedLocation = ref<{ lat: number, lng: number, icon?: string } | undefined>(undefined)
 const items = ref([
   { title: 'Add Antenna', icon: "mdi-antenna", clickEvent: "addAntenna" },
   { title: 'Mark location', icon: "mdi-map-marker", clickEvent: "markLocation" },
@@ -89,19 +106,19 @@ const items = ref([
 // const { data } = useFetch<{data: {[key: string]: any, meta: any}}>(`${apiBaseUrl}/api/v1/settings/location-types`, {baseURL: apiBaseUrl})
 // const locationTypeOptions = ref([...data.value?.data.locationTypes])
 // When the map is ready
-function onMapReady () {
-    // Access the Leaflet map instance
-    console.log(map?.value?.leafletObject)
-    console.log('Map Ready')
+function onMapReady() {
+  // Access the Leaflet map instance
+  console.log(map?.value?.leafletObject)
+  console.log('Map Ready')
 }
 
-function changePerspective({lat, lng, zoom = 10, select = false}: {lat: number, lng: number, zoom?: number, select?: boolean}){
+function changePerspective({ lat, lng, zoom = 10, select = false }: { lat: number, lng: number, zoom?: number, select?: boolean }) {
   mapCenter.value = [lat, lng];
-  console.log({map: map.value?.leafletObject})
+  console.log({ map: map.value?.leafletObject })
   setTimeout(() => {
     mapZoom.value = zoom
-    if(select){ 
-      selectedLocation.value = {lat, lng}
+    if (select) {
+      selectedLocation.value = { lat, lng }
     } else {
       selectedLocation.value = undefined
     }
@@ -113,11 +130,11 @@ const mapZoom = ref<number>(14)
 const userLocation = ref<L.LatLngExpression | null>(null)
 const mouseLocation = ref<L.LatLngTuple>([0, 0])
 
-function mouseMove(e: any){
-  if (mode.value === 'DISTANCE' || mode.value === 'POLYGON'){
-    const {latlng, layerPoint} = e
-    const {x: X, y: Y} = layerPoint
-    const { lat, lng} = latlng
+function mouseMove(e: any) {
+  if (mode.value === 'DISTANCE' || mode.value === 'POLYGON') {
+    const { latlng, layerPoint } = e
+    const { x: X, y: Y } = layerPoint
+    const { lat, lng } = latlng
     x.value = X
     y.value = Y
     mouseLocation.value = [lat, lng]
@@ -128,7 +145,7 @@ function mouseMove(e: any){
   }
 }
 
-function show(e: any){
+function show(e: any) {
   console.log({ e });
   // e.preventDefault()
 
@@ -141,14 +158,14 @@ function show(e: any){
     showMenu.value = true
   })
 }
-const {query} = useRoute()
-console.log({query})
+const { query } = useRoute()
+console.log({ query })
 if (Object.keys(query).length) {
-  const {lat, lng} = query
-  if (!selectedLocation.value) selectedLocation.value = {lat: Number(lat) ?? 0, lng: Number(lng) ?? 0}
+  const { lat, lng } = query
+  if (!selectedLocation.value) selectedLocation.value = { lat: Number(lat) ?? 0, lng: Number(lng) ?? 0 }
 }
 function context(e: any) {
-  console.log({e});
+  console.log({ e });
   switch (e) {
     case 'markLocation':
       markLocation.value = true
@@ -158,18 +175,18 @@ function context(e: any) {
   }
 }
 
-function mapClick(e: any){
+function mapClick(e: any) {
   switch (mode.value) {
     case 'SELECTOR':
     case 'NEARBY': {
-      const {lat, lng} = e.latlng
-        selectedLocation.value = {lat, lng}
-      }
+      const { lat, lng } = e.latlng
+      selectedLocation.value = { lat, lng }
+    }
       toggle('formInputNav', true)
       break;
     case 'DISTANCE':
     case 'POLYGON': {
-      const {lat, lng} = e.latlng
+      const { lat, lng } = e.latlng
       markers.value.push([lat, lng])
     }
     default:
@@ -178,9 +195,9 @@ function mapClick(e: any){
   console.log({ e, markers });
 }
 
-async function getUserLocation(): Promise<GeolocationPosition | GeolocationPositionError>{
+async function getUserLocation(): Promise<GeolocationPosition | GeolocationPositionError> {
   return new Promise((resolve, reject) => {
-    if(!("geolocation" in navigator)) {
+    if (!("geolocation" in navigator)) {
       reject(new Error('Geolocation is not available.'));
     }
     navigator.geolocation.getCurrentPosition(pos => {
@@ -191,20 +208,20 @@ async function getUserLocation(): Promise<GeolocationPosition | GeolocationPosit
   })
 }
 
-function markerClick(e: any){
-  if(mode.value === 'DISTANCE'){
-    const {latlng} = e
-    const { lat, lng} = latlng
+function markerClick(e: any) {
+  if (mode.value === 'DISTANCE') {
+    const { latlng } = e
+    const { lat, lng } = latlng
     markers.value.push([lat, lng])
   }
-  if(mode.value === 'POLYGON'){
+  if (mode.value === 'POLYGON') {
     mode.value = 'DEFAULT'
   }
-  console.log({e, fxn: 'markerClick', event: 'Marker Clicked'});
+  console.log({ e, fxn: 'markerClick', event: 'Marker Clicked' });
 }
 
-function createMarkerIcon({url, type = 'dot'}: {url?: string, type?: string}){
-  const iconTypeAnchors: {[key: string]: [number, number]} = {
+function createMarkerIcon({ url, type = 'dot' }: { url?: string, type?: string }) {
+  const iconTypeAnchors: { [key: string]: [number, number] } = {
     myLocation: [8, 32],
     dot: [16, 16]
   }
@@ -218,25 +235,34 @@ function createMarkerIcon({url, type = 'dot'}: {url?: string, type?: string}){
 
 async function moveToUserLocation() {
   const result = await getUserLocation()
-  if(result instanceof GeolocationPosition){
-    const {coords: {latitude: lat, longitude: lng}} = result
+  if (result instanceof GeolocationPosition) {
+    const { coords: { latitude: lat, longitude: lng } } = result
     mapCenter.value = [lat, lng]
     userLocation.value = [lat, lng];
     setTimeout(() => {
       mapZoom.value = 15
     }, 800);
     console.log("Move to user location");
-    console.log({result});
+    console.log({ result });
   }
 }
 const selectedLocationType = ref<LocationType | undefined>(undefined)
-function updateSelectedLocationType(e: any){
-  console.log({e});
+function updateSelectedLocationType(e: any) {
+  console.log({ e });
   selectedLocationType.value = e;
 }
+watch([highlightedLocation, locationBrowser], ([newHighlightedLocationValue, newLocationBrowserValue]) => {
+  console.log({ newHighlightedLocationValue, newLocationBrowserValue })
+  if (newHighlightedLocationValue) {
+    const highlight = savedLocations.value.find(x => x.id === newHighlightedLocationValue)
+    if (highlight) {
+      mapCenter.value = [highlight.latitude, highlight.longitude + 5]
+    }
+  }
+})
 
-const polyline = computed(() =>  [...markers.value, mouseLocation.value])
-async function handleLocationCreated(){
+const polyline = computed(() => [...markers.value, mouseLocation.value])
+async function handleLocationCreated() {
   selectedLocation.value = undefined
   toggle('formInputNav', false)
   await getSavedLocations()
@@ -245,13 +271,15 @@ async function handleLocationCreated(){
 <template>
   <UseFullscreen v-slot="{ toggle: toggleMapFullscreen, isFullscreen }">
     <div>
-      <div :style="{ height: isFullscreen ? '100vh': 'calc(100vh - 64px)', position: 'relative', cursor: modeCursor }">
+      <div :style="{ height: isFullscreen ? '100vh' : 'calc(100vh - 64px)', position: 'relative', cursor: modeCursor }">
         <!-- Location Search bar -->
-        <v-card v-if="!xs" width="500" tile elevation="0" height="48px"
+        <v-card v-if="!smAndDown" width="500" tile elevation="0" height="48px"
           style="position: absolute; top: 20px; left: 60px; z-index: 4;" floating>
           <v-card-text class="pa-0 d-flex align-center">
-            <v-autocomplete prepend-inner-icon="mdi-map-marker" placeholder="Search by City or State" flat variant="solo"
-              density="compact" hide-details prepend></v-autocomplete>
+            <v-btn @click="locationBrowser = !locationBrowser" stacked style="height: 48px;" tile
+              :color="locationBrowser ? 'warning' : 'primary'"><v-icon>mdi-format-list-text</v-icon></v-btn>
+            <v-autocomplete prepend-inner-icon="mdi-map-marker" placeholder="Search by City or State" flat
+              variant="solo" density="compact" hide-details prepend></v-autocomplete>
             <v-btn stacked style="height: 48px;" tile color="primary"><v-icon>mdi-magnify</v-icon></v-btn>
             <!-- <v-toolbar
               dense
@@ -285,7 +313,8 @@ async function handleLocationCreated(){
         <!-- Menu Open button -->
         <v-card tile elevation="0" style="position: absolute; bottom: 108px; right: 20px; z-index: 4;" floating>
           <v-card-text class="pa-0 d-flex align-center justify-center" style="width: 48px">
-            <v-btn @click="changeMode('NEARBY')" stacked style="height: 36px; width: 36px" class="px-0" tile :color="isCurrentMode('NEARBY') ? 'warning': 'primary'"><v-icon>mdi-map-marker-circle</v-icon>
+            <v-btn @click="changeMode('NEARBY')" stacked style="height: 36px; width: 36px" class="px-0" tile
+              :color="isCurrentMode('NEARBY') ? 'warning' : 'primary'"><v-icon>mdi-map-marker-circle</v-icon>
               <v-tooltip activator="parent" location="left">Find Nearby</v-tooltip>
             </v-btn>
           </v-card-text>
@@ -293,7 +322,8 @@ async function handleLocationCreated(){
         <!-- Menu Open button -->
         <v-card tile elevation="0" style="position: absolute; bottom: 152px; right: 20px; z-index: 4;" floating>
           <v-card-text class="pa-0 d-flex align-center justify-center" style="width: 48px">
-            <v-btn @click="changeMode('DISTANCE')" stacked style="height: 36px; width: 36px" class="px-0" tile :color="isCurrentMode('DISTANCE') ? 'warning': 'primary'"><v-icon>mdi-map-marker-distance</v-icon>
+            <v-btn @click="changeMode('DISTANCE')" stacked style="height: 36px; width: 36px" class="px-0" tile
+              :color="isCurrentMode('DISTANCE') ? 'warning' : 'primary'"><v-icon>mdi-map-marker-distance</v-icon>
               <v-tooltip activator="parent" location="left">Distance between</v-tooltip>
             </v-btn>
           </v-card-text>
@@ -301,7 +331,8 @@ async function handleLocationCreated(){
         <!-- Menu Open button -->
         <v-card tile elevation="0" style="position: absolute; bottom: 196px; right: 20px; z-index: 4;" floating>
           <v-card-text class="pa-0 d-flex align-center justify-center" style="width: 48px">
-            <v-btn @click="changeMode('POLYGON')" stacked style="height: 36px; width: 36px" class="px-0" tile :color="isCurrentMode('POLYGON') ? 'warning': 'primary'"><v-icon>mdi-vector-triangle</v-icon>
+            <v-btn @click="changeMode('POLYGON')" stacked style="height: 36px; width: 36px" class="px-0" tile
+              :color="isCurrentMode('POLYGON') ? 'warning' : 'primary'"><v-icon>mdi-vector-triangle</v-icon>
               <v-tooltip activator="parent" location="left">Draw Polygon</v-tooltip>
             </v-btn>
           </v-card-text>
@@ -309,7 +340,8 @@ async function handleLocationCreated(){
         <!-- Menu Open button -->
         <v-card tile elevation="0" style="position: absolute; bottom: 240px; right: 20px; z-index: 4;" floating>
           <v-card-text class="pa-0 d-flex align-center justify-center" style="width: 48px">
-            <v-btn @click="changeMode('SELECTOR')" stacked style="height: 36px; width: 36px" class="px-0" tile :color="isCurrentMode('SELECTOR') ? 'warning': 'primary'"><v-icon>mdi-cursor-default</v-icon>
+            <v-btn @click="changeMode('SELECTOR')" stacked style="height: 36px; width: 36px" class="px-0" tile
+              :color="isCurrentMode('SELECTOR') ? 'warning' : 'primary'"><v-icon>mdi-cursor-default</v-icon>
               <v-tooltip activator="parent" location="left">Mark / Select Location</v-tooltip>
             </v-btn>
           </v-card-text>
@@ -317,7 +349,8 @@ async function handleLocationCreated(){
         <!-- Menu Open button -->
         <v-card tile elevation="0" style="position: absolute; bottom: 284px; right: 20px; z-index: 4;" floating>
           <v-card-text class="pa-0 d-flex align-center justify-center" style="width: 48px">
-            <v-btn @click="changeMode('DEFAULT')" stacked style="height: 36px; width: 36px" class="px-0" tile :color="isCurrentMode('DEFAULT') ? 'warning': 'primary'"><v-icon>mdi-cursor-pointer</v-icon>
+            <v-btn @click="changeMode('DEFAULT')" stacked style="height: 36px; width: 36px" class="px-0" tile
+              :color="isCurrentMode('DEFAULT') ? 'warning' : 'primary'"><v-icon>mdi-cursor-pointer</v-icon>
               <v-tooltip activator="parent" location="left">Mark / Select Location</v-tooltip>
             </v-btn>
           </v-card-text>
@@ -325,7 +358,8 @@ async function handleLocationCreated(){
         <!-- Menu Open button -->
         <v-card tile elevation="0" style="position: absolute; bottom: 64px; right: 20px; z-index: 4;" floating>
           <v-card-text class="pa-0 d-flex align-center justify-center" style="width: 48px">
-            <v-btn @click="toggle('formInputNav')" stacked style="height: 36px; width: 36px" class="px-0" tile :color="formInputNav ? 'warning': 'primary'"><v-icon>mdi-chevron-left</v-icon>
+            <v-btn @click="toggle('formInputNav')" stacked style="height: 36px; width: 36px" class="px-0" tile
+              :color="formInputNav ? 'warning' : 'primary'"><v-icon>mdi-chevron-left</v-icon>
               <v-tooltip activator="parent" location="left">Settings</v-tooltip>
             </v-btn>
           </v-card-text>
@@ -333,7 +367,8 @@ async function handleLocationCreated(){
         <!-- Settings open button -->
         <v-card tile elevation="0" style="position: absolute; bottom: 20px; right: 20px; z-index: 4;" floating>
           <v-card-text class="pa-0 d-flex align-center justify-center" style="width: 48px">
-            <v-btn @click="toggle('mapSettingsNav')" stacked style="height: 36px; width: 36px" class="px-0" tile :color="mapSettingsNav ? 'warning': 'primary'"><v-icon>mdi-cog</v-icon>
+            <v-btn @click="toggle('mapSettingsNav')" stacked style="height: 36px; width: 36px" class="px-0" tile
+              :color="mapSettingsNav ? 'warning' : 'primary'"><v-icon>mdi-cog</v-icon>
               <v-tooltip activator="parent" location="top">Settings</v-tooltip>
             </v-btn>
           </v-card-text>
@@ -342,8 +377,20 @@ async function handleLocationCreated(){
         <v-card tile elevation="0" style="position: absolute; bottom: 20px; right: 77px; z-index: 4;" floating>
           <v-card-text class="pa-0 d-flex align-center justify-center" style="width: 48px">
             <v-btn @click="toggleMapFullscreen" stacked style="height: 36px; width: 36px" class="px-0" tile
-              :color="isFullscreen ? 'warning': 'primary'"><v-icon>{{ isFullscreen ? 'mdi-fullscreen-exit' : 'mdi-overscan' }}</v-icon>
+              :color="isFullscreen ? 'warning' : 'primary'"><v-icon>{{ isFullscreen ? 'mdi-fullscreen-exit' :
+                'mdi-overscan' }}</v-icon>
               <v-tooltip activator="parent" location="top">Full screen</v-tooltip>
+            </v-btn>
+          </v-card-text>
+        </v-card>
+
+        <!-- Request full screen button -->
+        <v-card tile elevation="0" style="position: absolute; bottom: 20px; right: 191px; z-index: 4;" floating>
+          <v-card-text class="pa-0 d-flex align-center justify-center" style="width: 48px">
+            <v-btn @click="locationBrowser = !locationBrowser" stacked style="height: 36px; width: 36px" class="px-0"
+              tile :color="locationBrowser ? 'warning' : 'primary'"><v-icon>{{ isFullscreen ? 'mdi-format-list-text' :
+                'mdi-format-list-text' }}</v-icon>
+              <v-tooltip activator="parent" location="top">Location List</v-tooltip>
             </v-btn>
           </v-card-text>
         </v-card>
@@ -375,11 +422,10 @@ async function handleLocationCreated(){
             </v-list-item>
           </v-list>
         </v-menu> -->
-        
-        <LMap :zoom="mapZoom" @mouseMove="mouseMove" :style="{'z-index': 1, position: 'relative', cursor: 'inherit'}" ref="map" @ready="onMapReady" :center="mapCenter"
-          @contextmenu="show" @click="mapClick">
-          <v-menu :target="[x, y]"
-            v-model="showMenu" transition="slide-x-transition" :close-on-content-click="false">
+
+        <LMap :zoom="mapZoom" @mouseMove="mouseMove" :style="{ 'z-index': 1, position: 'relative', cursor: 'inherit' }"
+          ref="map" @ready="onMapReady" :center="mapCenter" @contextmenu="show" @click="mapClick">
+          <v-menu :target="[x, y]" v-model="showMenu" transition="slide-x-transition" :close-on-content-click="false">
             <v-list density="compact" slim>
               <v-list-item v-for="(item, index) in items" :key="index" :value="index" @click="context(item.clickEvent)">
                 <template v-slot:prepend>
@@ -389,43 +435,35 @@ async function handleLocationCreated(){
               </v-list-item>
             </v-list>
           </v-menu>
-          <LTileLayer
-            url="https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.jpg"
+          <LTileLayer url="https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.jpg"
             attribution="<a href='https://memomaps.de/'>memomaps.de</a> <a href='http://creativecommons.org/licenses/by-sa/2.0/'>CC-BY-SA</a>, map data &copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
-            layer-type="base"
-            name="Satellite"
-            />
-          <LTileLayer
-            url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"
+            layer-type="base" name="Satellite" />
+          <LTileLayer url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"
             attribution="<a href='https://memomaps.de/'>memomaps.de</a> <a href='http://creativecommons.org/licenses/by-sa/2.0/'>CC-BY-SA</a>, map data &copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
-            layer-type="base"
-            name="Stadia.Light"
-            />
-          <LTileLayer
-            url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"
+            layer-type="base" name="Stadia.Light" />
+          <LTileLayer url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"
             attribution="<a href='https://memomaps.de/'>memomaps.de</a> <a href='http://creativecommons.org/licenses/by-sa/2.0/'>CC-BY-SA</a>, map data &copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
-            layer-type="base"
-            name="Stadia.Dark"
-            />
-          <LTileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            layer-type="base" name="Stadia.Dark" />
+          <LTileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution="&amp;copy; <a href=&quot;https://www.openstreetmap.org/&quot;>OpenStreetMap</a> contributors"
-            layer-type="base"
-            name="OpenStreetMap"
-          />
-          <LCircle
-            :lat-lng="[0, 0]"
-            :radius="1000000"
-            :color="'green'"
-          />
-          <LPolyline v-if="mode === 'DISTANCE'" :lat-lngs="polyline" :key="`${x}${y}`" :no-clip="false" :interactive="true" color="#5153ff" />
-          <LPolygon v-if="mode === 'POLYGON' || mode === 'DEFAULT'" :lat-lngs="polyline" :key="`${x}${y}`" :fill="true" :fill-opacity="0.4" o-clip="false" :interactive="true" color="#5153ff" />
+            layer-type="base" name="OpenStreetMap" />
+          <!-- <LCircle :lat-lng="[0, 0]" :radius="1000000" :color="'green'" /> -->
+          <LPolyline v-if="mode === 'DISTANCE'" :lat-lngs="polyline" :key="`${x}${y}`" :no-clip="false"
+            :interactive="true" color="#5153ff" />
+          <LPolygon v-if="mode === 'POLYGON' || mode === 'DEFAULT'" :lat-lngs="polyline" :key="`${x}${y}`" :fill="true"
+            :fill-opacity="0.4" o-clip="false" :interactive="true" color="#5153ff" />
           <div v-if="mode !== 'SELECTOR'">
-            <LMarker v-for="(m, i) in markers" :key="i" @click="markerClick" :icon="createMarkerIcon({})" :lat-lng="m" style="cursor: inherit" />
+            <LMarker v-for="(m, i) in markers" :key="i" @click="markerClick" :icon="createMarkerIcon({})" :lat-lng="m"
+              style="cursor: inherit" />
           </div>
-          <LMarker v-if="userLocation" @click="markerClick" :icon="createMarkerIcon({type: 'myLocation'})" :lat-lng="userLocation" style="cursor: inherit" />
-          <LMarker v-if="selectedLocation && (mode === 'DEFAULT' || mode === 'SELECTOR')" @click="markerClick" :icon="createMarkerIcon({url: selectedLocationType?.iconUrl})" :key="String(selectedLocation)" :lat-lng="[selectedLocation.lat, selectedLocation.lng]" style="cursor: inherit" />
-          <LocationMarker v-for="loc in savedLocations" :lat="Number(loc.latitude)" :lng="Number(loc.longitude)" :location="loc"/>
+          <LMarker v-if="userLocation" @click="markerClick" :icon="createMarkerIcon({ type: 'myLocation' })"
+            :lat-lng="userLocation" style="cursor: inherit" />
+          <LMarker v-if="selectedLocation && (mode === 'DEFAULT' || mode === 'SELECTOR')" @click="markerClick"
+            :icon="createMarkerIcon({ url: selectedLocationType?.iconUrl })" :key="String(selectedLocation)"
+            :lat-lng="[selectedLocation.lat, selectedLocation.lng]" style="cursor: inherit" />
+          <LocationMarker v-for="loc in savedLocations" :lat="Number(loc.latitude)" :lng="Number(loc.longitude)"
+            :location="loc" :highlight="loc.id === highlightedLocation"
+            :excluded="!(filteredSavedLocations.map(x => x.id).includes(loc.id))" />
           <!-- <LMarker  @click.stop="markerClick" :icon="createMarkerIcon()" :lat-lng="mapCenter" /> -->
           <!-- <LMarker  @click.stop="markerClick" :lat-lng="mapCenter" /> -->
           <!--
@@ -459,28 +497,81 @@ async function handleLocationCreated(){
           attribution="<a href='https://memomaps.de/'>memomaps.de</a> <a href='http://creativecommons.org/licenses/by-sa/2.0/'>CC-BY-SA</a>, map data &copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
           name="Airports"
           /> -->
-          
+
           <LCircle :lat-lng="[47.21322, -1.559482]" :radius="4500" :color="'red'" />
           <LControlLayers position="topright" />
           <LControlScale position="topright" :imperial="true" :metric="false">
             <template #default="slotProps">{{ slotProps }}</template>
           </LControlScale>
         </LMap>
-        
+        <v-navigation-drawer width="370" v-model="locationBrowser">
+          <v-card tile elevation="0">
+            <v-card-title class="d-flex align-center bg-primary" style="height: 52px">
+              <p>Saved Locations</p>
+            </v-card-title>
+            <v-card-title class="d-flex align-center bg-grey-lighten-4 px-0" style="height: 52px">
+              <v-slide-group v-model="selectedLocationTypeFilter" center-active show-arrows>
+                <v-slide-group-item v-slot="{ isSelected, toggle }" value="all">
+                  <v-chip class="ma-2" :color="isSelected ? 'primary' : ''" label @click="toggle">
+                    <v-icon icon="mdi-label" start></v-icon>
+                    All
+                  </v-chip>
+                </v-slide-group-item>
+                <v-slide-group-item v-for="n in locationTypes" :key="n" v-slot="{ isSelected, toggle }" :value="n.id">
+                  <v-chip class="ma-2" :color="isSelected ? 'primary' : ''" label @click="toggle">
+                    <v-avatar :image="n.iconUrl" start></v-avatar>
+                    {{ changeCase.capitalCase(n.name) }}
+                    <span class="text-medium-emphasis"
+                      :class="isSelected && n._count?.locations > 0 ? 'text-warning' : 'text-medium-emphasis'"
+                      v-if="n._count">
+                      &nbsp;({{ n._count?.locations }})
+                    </span>
+                  </v-chip>
+                </v-slide-group-item>
+              </v-slide-group>
+            </v-card-title>
+            <v-divider></v-divider>
+            <v-card-text class="pa-0"
+              style="height: calc(100vh - calc(64px + 64px + 64px)); overflow-y: scroll; overflow-x: hidden;">
+              <v-item-group selected-class="bg-primary" v-model="highlightedLocation">
+                <v-container>
+                  <v-row>
+                    <v-slide-y-transition group>
+                      <v-col v-for="n in filteredSavedLocations" :key="n" cols="12" md="12">
+                        <v-item v-slot="{ isSelected, selectedClass, toggle }" :value="n.id">
+
+                          <LocationCard :is-selected="isSelected" :location="n" @click="toggle" />
+                        </v-item>
+
+                      </v-col>
+                    </v-slide-y-transition>
+                  </v-row>
+                </v-container>
+              </v-item-group>
+            </v-card-text>
+            <v-divider></v-divider>
+            <!-- <v-card-actions>
+
+            </v-card-actions> -->
+          </v-card>
+
+        </v-navigation-drawer>
       </div>
-      <v-navigation-drawer :style="{minWidth: xs && formInputNav ? '90vw':'auto'}" location="right" :minHeight="isFullscreen ? '100vh': 'auto'" :disable-resize-watcher="true" :disable-route-watcher="true" v-model="formInputNav">
-        <AddLocationForm v-model:location="selectedLocation" @update:location-type="updateSelectedLocationType" :location-type="selectedLocationType" @update:location-created="handleLocationCreated" />
+      <v-navigation-drawer :width="xs ? '90vw' : 256" location="right" :minHeight="isFullscreen ? '100vh' : 'auto'"
+        :disable-resize-watcher="true" :disable-route-watcher="true" v-model="formInputNav">
+        <AddLocationForm v-model:location="selectedLocation" @update:location-type="updateSelectedLocationType"
+          :location-type="selectedLocationType" @update:location-created="handleLocationCreated" />
       </v-navigation-drawer>
     </div>
-    <v-navigation-drawer :style="{minWidth: xs && mapSettingsNav ? '90vw':'auto'}" location="right" :disable-resize-watcher="true" :disable-route-watcher="true" v-model="mapSettingsNav">
-      <div>
+    <v-navigation-drawer :style="{ minWidth: xs && mapSettingsNav ? '90vw' : 'auto' }" location="right"
+      :disable-resize-watcher="true" :disable-route-watcher="true" v-model="mapSettingsNav">
+      <!-- <div>
         <p :key="mapZoom">{{ mapZoom }}</p>
-      </div>
-      <MapSettingsNav 
-        @update:selected-city="(e) => changePerspective({lat: e?.latitude || 0, lng: e?.longitude || 0, zoom: 12, select: Boolean(true)})"
-        @update:selected-state="(e) => changePerspective({lat: e?.latitude || 0, lng: e?.longitude || 0, zoom: 9})"
-        @update:selected-country="(e) => changePerspective({lat: e?.latitude || 0, lng: e?.longitude || 0, zoom: 6})"
-      />
+      </div> -->
+      <MapSettingsNav
+        @update:selected-city="(e) => changePerspective({ lat: e?.latitude || 0, lng: e?.longitude || 0, zoom: 12, select: Boolean(true) })"
+        @update:selected-state="(e) => changePerspective({ lat: e?.latitude || 0, lng: e?.longitude || 0, zoom: 9 })"
+        @update:selected-country="(e) => changePerspective({ lat: e?.latitude || 0, lng: e?.longitude || 0, zoom: 6 })" />
     </v-navigation-drawer>
   </UseFullscreen>
 </template>
