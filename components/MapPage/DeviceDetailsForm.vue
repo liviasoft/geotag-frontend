@@ -3,7 +3,7 @@
   import { CUSTOM_FIELD_TYPE, type DynamicCustomFieldType } from '~/types/Locations.types';
   import DynamicCustomField from './DynamicCustomField.vue';
   import { ref, defineModel, defineEmits } from 'vue';
-  import { isNotEmpty } from '@neoncoder/validator-utils';
+  import { isBoolean, isNotEmpty, isNumbersOnly, isValidAlphaNum } from '@neoncoder/validator-utils';
   import { toast } from '@neoncoder/vuetify-sonner';
   const dialog = ref(false);
   const props = defineProps({
@@ -14,11 +14,15 @@
     portError: {
       type: Boolean,
       default: false,
+    },
+    deviceData: {
+      type: Object,
+      default: () => {}
     }
   })
   const ipAddress = defineModel('ipAddress');
   const port = defineModel('port');
-  const additionalFields = ref<Array<{name: string, type: DynamicCustomFieldType}>>([])
+  const additionalFields = ref<Array<{name: string, type: DynamicCustomFieldType, startValue?: string | number | boolean}>>([])
   const addFieldName = ref('');
   const addFieldType = ref<DynamicCustomFieldType>('Text')
   function reset(){
@@ -32,6 +36,10 @@
       toast.error('Field Name is required')
       return;
     }
+    if(isNumbersOnly(addFieldName.value)){
+      toast.error('Field Name cannot be number only')
+      return;
+    }
     if(additionalFields.value.some((el) => changeCase.camelCase(el.name) === changeCase.camelCase(addFieldName.value))){
       toast.error('This custom field already exists')
       return;
@@ -39,12 +47,34 @@
     additionalFields.value.push({name: addFieldName.value, type: addFieldType.value})
     reset()
   }
+  function updateCustomField(e: any){
+    const updatedField = additionalFields.value.find(x => changeCase.camelCase(x.name) === changeCase.camelCase(e.fieldName))
+    if(updatedField){
+      updatedField.startValue = e.value
+    }
+    emit('update:customField', e)
+  }
   function deleteCustomField(e: any){
     console.log({e});
     additionalFields.value = additionalFields.value.filter(x => changeCase.camelCase(x.name) !== changeCase.camelCase(e.fieldName))
     emit('delete:customField', e)
   }
   const emit = defineEmits(['update:ipAddress', 'update:port', 'update:customField', 'delete:customField'])
+  onMounted(() => {
+    if(props.deviceData){
+      Object.keys(props.deviceData).forEach((field) => {
+        console.log({field});
+        if(field !== 'ipAddress' && field !== 'port') {
+          const type: DynamicCustomFieldType = isBoolean(props.deviceData[field]) ? 'Switch' : isNumbersOnly(props.deviceData[field]) ? 'Number' : 'Text' 
+          additionalFields.value.push({
+            name: field,
+            type,
+            startValue: type === 'Switch' ? Boolean(props.deviceData[field]) : type === 'Number' ? Number(props.deviceData[field]) : props.deviceData[field]
+          })
+        }
+      })
+    }
+  })
 </script>
 <template>
   <div>
@@ -110,7 +140,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <DynamicCustomField class="mb-2" v-for="(field, i) in additionalFields" :key="i" :field-type="field.type" :field-name="field.name" @update:field-value="(e) => emit('update:customField', e)" @delete:field-value="deleteCustomField"/>
+    <DynamicCustomField class="mb-2" v-for="(field, i) in additionalFields" :key="i" :field-type="field.type" :field-name="field.name" @update:field-value="updateCustomField" @delete:field-value="deleteCustomField" :start-value="field.startValue" />
     <v-btn @click="dialog = !dialog" prepend-icon="mdi-plus" size="small" color="warning" class="mb-2" variant="tonal" text="Add Extra Field"></v-btn>
     <!-- <v-divider class="mb-2"></v-divider> -->
   </div>

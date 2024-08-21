@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+  import DeviceCommandSettings from './DeviceCommandSettings.vue'
   import LocationSettings from './LocationSettings.vue';
   const emit = defineEmits(['update:selectedCity', 'update:selectedState', 'update:selectedCountry'])
 </script>
@@ -15,6 +16,8 @@
         @update:selected-state="(e) => emit('update:selectedState', e)"
         @update:selected-country="(e) => emit('update:selectedCountry', e)" 
       />
+      <v-divider></v-divider>
+      <DeviceCommandSettings />
     </v-card-text>
     <div>
       <!-- <h2>Map Settings</h2> -->

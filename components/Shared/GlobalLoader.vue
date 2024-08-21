@@ -1,13 +1,6 @@
 <script lang="ts" setup>
   import { storeToRefs } from 'pinia';
   const { globalLoader } = storeToRefs(useSideNavStore())
-  const emit = defineEmits(['update:dialog'])
-  // const props = defineProps({
-  //   dialog: {
-  //     type: Boolean,
-  //     default: false,
-  //   }
-  // })
 </script>
 
 <template>

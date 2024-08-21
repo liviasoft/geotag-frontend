@@ -1,9 +1,14 @@
 <script lang="ts" setup>
+import { toast } from '@neoncoder/vuetify-sonner';
 import type { SavedLocation } from '../../types/Locations.types'
 import * as changeCase from "change-case";
 import { useUIStore } from '~/stores/ui';
+import { useLocationStore } from '~/stores/locations';
+import { useAuthStore } from '~/stores/auth';
 import { GOLDEN_RATION } from '~/types/constants';
 const { connectionStatusColor, connectionStatusIcon } = useUIStore()
+const {toggleConnectionTestLoadingState} = useLocationStore()
+const {makeAuthenticatedRequest} = useAuthStore()
 const props = defineProps({
   isSelected: {
     type: Boolean,
@@ -14,9 +19,28 @@ const props = defineProps({
     required: true
   }
 })
-const connectionStatus = props.location.connectionStatus ? props.location.connectionStatus : ref<'PENDING' | 'OK' | 'ERROR'>('PENDING')
 const height = ref(122)
 const width = computed(() => height.value * GOLDEN_RATION)
+async function testDeviceConnection(){
+  if (props.location.connectionTestLoading) return;
+  toggleConnectionTestLoadingState(props.location.id, true)
+  const url = `api/v1/locations/sites/${props.location.id}/test-connection`
+  toast.toastOriginal.promise(makeAuthenticatedRequest({ url }), {
+    loading: `${props.location.name}: Testing Device Connection...`,
+    success: (data: any) => {
+      console.log({data})
+      toast.success(data?.response?.message ? data.response.message : 'Connection Test successful')
+      toggleConnectionTestLoadingState(props.location.id, false)
+      return `Connection Test Successful`
+    },
+    error: (data: any) => {
+      toast.error(data?.response?.message ? data.response.message : 'Connection Test failed')
+      console.log({data})
+      toggleConnectionTestLoadingState(props.location.id, false)
+      return `Error: ${data?.response?.message}`
+    }
+  })
+}
 </script>
 <template>
   <v-card border
@@ -42,12 +66,16 @@ const width = computed(() => height.value * GOLDEN_RATION)
         <span class="text-medium-emphasis">
           Status 
         </span> 
-        <v-chip class="my-2 mx-1" size="small" label :color="connectionStatusColor(connectionStatus)" variant="tonal">
-          <v-icon :icon="connectionStatusIcon(connectionStatus)" start></v-icon>
-          {{ connectionStatus }}
+        <v-chip v-if="location.connectionStatus" class="my-2 mx-1" size="small" label :color="connectionStatusColor(location.connectionTestLoading ? 'PENDING': location.connectionStatus)" variant="tonal">
+          <v-icon :icon="connectionStatusIcon(location.connectionTestLoading ? 'PENDING': location.connectionStatus)" start></v-icon>
+          {{ location.connectionTestLoading ? 'PENDING': location.connectionStatus }}
         </v-chip>
         <v-spacer></v-spacer>
-        <v-btn @click.stop="() => {}" icon="mdi-restore" size="x-small" variant="text"></v-btn>
+        <v-tooltip text="Run Connection Test">
+          <template v-slot:activator="{ props }">
+            <v-btn v-bind="props" :loading="location.connectionTestLoading" @click.stop="testDeviceConnection" icon="mdi-restore" size="x-small" variant="text"></v-btn>
+          </template>
+        </v-tooltip>
       </div>
       <!-- <v-scale-transition>
         <v-icon v-if="isSelected" color="white" icon="mdi-close-circle-outline" size="48"></v-icon>

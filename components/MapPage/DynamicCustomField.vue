@@ -12,19 +12,30 @@
       type: String as () => DynamicCustomFieldType,
       default: CUSTOM_FIELD_TYPE.Text
     },
+    startValue: {
+      type: [String, Boolean, Number],
+      default: null,
+    }
   })
   const emit = defineEmits([`update:fieldValue`, 'delete:fieldValue'])
+  onMounted(() => {
+    console.log({fieldName: props.fieldName, fieldType: props.fieldType, startValue: props.startValue})
+    if(props.startValue){
+      emit('update:fieldValue', {fieldName: props.fieldName, value: props.startValue})
+      // fieldValue.value = props.startValue
+    }
+  })
 </script>
 
 <template>
   <div class="d-flex align-center">
-    <v-text-field variant="outlined" density="compact" hide-details v-if="fieldType === 'Text'" :label="props.fieldName" @update:modelValue="(e: string) => emit('update:fieldValue', {fieldName, value: e})"></v-text-field>
-    <v-text-field variant="outlined" density="compact" hide-details type="number" v-else-if="fieldType === 'Number'" :label="props.fieldName" @update:modelValue="(e: number) => emit('update:fieldValue', {fieldName, value: e})"></v-text-field>
+    <v-text-field :value="startValue" variant="outlined" density="compact" hide-details v-if="fieldType === 'Text'" :label="props.fieldName" @update:modelValue="(e: string) => emit('update:fieldValue', {fieldName, value: e})"></v-text-field>
+    <v-text-field :value="startValue" variant="outlined" density="compact" hide-details type="number" v-else-if="fieldType === 'Number'" :label="props.fieldName" @update:modelValue="(e: number) => emit('update:fieldValue', {fieldName, value: e})"></v-text-field>
     <v-switch
       density="compact"
       color="primary"
       v-else-if="fieldType === 'Switch'"
-      v-model="fieldValue"
+      :value="startValue"
       :label="`Switch: ${fieldName.toString()}`"
       @update:modelValue="(e: boolean) => emit('update:fieldValue', {fieldName, value: e})"
       hide-details

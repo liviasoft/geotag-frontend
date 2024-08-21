@@ -2,7 +2,7 @@
   import { useSideNavStore } from '~/stores/sidenav';
   import { storeToRefs } from 'pinia';
   import { useDisplay } from 'vuetify';
-import { toast } from '@neoncoder/vuetify-sonner';
+  import { toast } from '@neoncoder/vuetify-sonner';
   const {mobile} = useDisplay();
   const navStore = useSideNavStore()
   const authStore = useAuthStore()

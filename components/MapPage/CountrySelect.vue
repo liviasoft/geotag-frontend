@@ -13,9 +13,7 @@
       const url = (new URL(`${apiBaseUrl}/api/v1/locations/countries`)).href
       const res = await fetch(url);
       const {data: {countries: fetchedCountries}} = await res.json()
-      console.log({fetchedCountries})
       countries.value = fetchedCountries;
-      // console.log({response});
     } catch (error: any) {
       console.log({error})
     } finally {

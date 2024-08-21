@@ -89,15 +89,16 @@
       deviceData.value.port = port.value;
     }
     const data = {
-        latitude,
-        longitude,
-        locationType,
-        name: name.value,
-        description: description.value,
-        city: nearbyCity.value,
-        contacts: contacts.value,
-        deviceData: locationIsDevice.value ? deviceData.value : undefined
-      }
+      latitude,
+      longitude,
+      locationType,
+      name: name.value,
+      description: description.value,
+      city: nearbyCity.value,
+      contacts: contacts.value,
+      deviceData: locationIsDevice.value ? deviceData.value : undefined,
+      connectionStatus: locationIsDevice.value ? 'PENDING' : undefined
+    }
     console.log({data})
     if(!locationType){
       toast.error('Location Type is required');

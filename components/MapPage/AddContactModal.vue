@@ -34,7 +34,6 @@
   }
   async function addNewContact(){
     if(loading.value) return;
-    console.log({address, name, email, phoneCode, dialog, phone});
     const data = {
       address: address.value,
       email: email.value,
@@ -47,9 +46,9 @@
       loading.value = true;
       const {response} = await authStore.makeAuthenticatedRequest({url: 'api/v1/settings/contacts', method: 'POST', data})
       console.log({response});
-      if(!response.success) {
-        if (response.error?.email) errors.value.email = response.error.email
-        if (response.error?.phone) errors.value.phone = response.error.phone
+      if(!response?.success) {
+        if (response?.error?.email) errors.value.email = response.error.email
+        if (response?.error?.phone) errors.value.phone = response.error.phone
       } else {
         reset()
         emit('update:contactCreated')
@@ -96,37 +95,37 @@
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn
-            color="error"
-            variant="text"
-            class="text-body-1 pt-1"
-            @click="reset"
-            prepend-icon="mdi-close"
-          >
-            Cancel
-          </v-btn>
-          <v-btn
-            color="primary"
-            variant="elevated"
-            @click="addNewContact"
-            class="text-body-1 ml-4 pt-1"
-            prepend-icon="mdi-plus"
-            elevation-24
-          >
-            Add Contact
-          </v-btn>
+          color="error"
+          variant="text"
+          class="text-body-1 pt-1"
+          @click="reset"
+          prepend-icon="mdi-close"
+        >
+          Cancel
+        </v-btn>
+        <v-btn
+          color="primary"
+          variant="elevated"
+          @click="addNewContact"
+          class="text-body-1 ml-4 pt-1"
+          prepend-icon="mdi-plus"
+          elevation-24
+        >
+          Add Contact
+        </v-btn>
       </v-card-actions>
       <v-overlay
-    :model-value="loading"
-    scrim="blue"
-    class="align-center justify-center"
-    contained
-    >
-    <v-progress-circular
-    color="primary"
-    size="64"
-    indeterminate
-    ></v-progress-circular>
-    </v-overlay>
+        :model-value="loading"
+        scrim="blue"
+        class="align-center justify-center"
+        contained
+        >
+        <v-progress-circular
+        color="primary"
+        size="64"
+        indeterminate
+        ></v-progress-circular>
+      </v-overlay>
     </v-card>
   </template>
 </v-dialog>

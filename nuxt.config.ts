@@ -7,7 +7,8 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      API_BASE_URL: process.env.API_BASE_URL, 
+      API_BASE_URL: process.env.API_BASE_URL,
+      POCKETBASE_URL: process.env.POCKETBASE_URL,
     }
   }
   // experimental: {

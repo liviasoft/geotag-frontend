@@ -15,37 +15,34 @@ import type { LocationType, SavedLocation } from '../types/Locations.types';
 import MapSettingsNav from '~/components/MapPage/MapSettingsNav.vue';
 
 const { xs, smAndDown } = useDisplay();
-const config = useRuntimeConfig();
-const apiBaseUrl = config.public.API_BASE_URL;
+const { getUserIfLoggedIn } = useAuthStore()
+const { getDeviceCommands } = useDeviceStore()
 
-const savedLocations = ref<Array<SavedLocation>>([])
-
-async function getSavedLocations() {
+async function getLocations() {
   if (globalLoader.value) return;
-  const url = (new URL(`${apiBaseUrl}/api/v1/locations/sites`)).href
-  try {
-    globalLoader.value = true;
-    // await getLocationTypes();
-    const res = await fetch(url)
-    const { data: { locations } } = await res.json()
-    console.log({ locations })
-    savedLocations.value = locations;
-  } catch (error: any) {
-    console.log({ error })
-  } finally {
-    globalLoader.value = false
-  }
+  globalLoader.value = true;
+  toast.toastOriginal.promise(getSavedLocations(), {
+    loading: `Fetching Saved Locations...`,
+    success: (data: any) => {
+      console.log({data})
+      toast.success(data?.response?.message ? data.response.message : 'Fetched Saved Locations')
+      return `Marked Saved Locations`
+    },
+    error: (data: any) => {
+      toast.error(data?.response?.message ? data.response.message : 'Error Fetching saved locations')
+      console.log({data})
+      return `Error: ${data?.response?.message}`
+    },
+    finally: () => {
+      globalLoader.value = false
+    }
+  })
 }
 
 onMounted(() => {
   // console.log({ L })
   getSavedLocations()
   getLocationTypes();
-})
-
-const filteredSavedLocations = computed(() => {
-  if (selectedLocationTypeFilter.value === 'all') return savedLocations.value
-  return savedLocations.value.filter(l => l.locationType === selectedLocationTypeFilter.value)
 })
 
 const mapModes = {
@@ -59,10 +56,10 @@ const mapModes = {
 type TMode = keyof typeof mapModes
 
 const mode = ref<TMode>('DEFAULT')
-const selectedLocationTypeFilter = ref<string>('all')
 
 function changeMode(newMode: TMode) {
   console.log(`Changing ${mode.value} => ${newMode}`)
+  if(newMode === 'DEFAULT') selectedLocation.value = undefined
   mode.value = newMode
 }
 
@@ -76,10 +73,10 @@ const modeCursor = computed(() => {
 
 // #region Pinia Navbar logic
 const navStore = useSideNavStore()
-const { mapSettingsNav, formInputNav, globalLoader } = storeToRefs(navStore)
+const { mapSettingsNav, formInputNav, globalLoader, mainNav } = storeToRefs(navStore)
 const locationStore = useLocationStore()
-const { getLocationTypes } = locationStore
-const { locationTypes } = storeToRefs(locationStore)
+const { getLocationTypes, getSavedLocations } = locationStore
+const { locationTypes, savedLocations, filteredSavedLocations, selectedLocationTypeFilter } = storeToRefs(useLocationStore())
 const highlightedLocation = ref<string | null>(null)
 const locationBrowser = ref(false)
 const model = ref(null)
@@ -101,15 +98,30 @@ const items = ref([
   { title: 'Historical', icon: "mdi-refresh", clickEvent: "startHistorical" },
   { title: 'Realtime', icon: "mdi-camera-timer", clickEvent: "listenRealtime" },
 ])
-// #endregion - Context Menu
-// pending: locationTypeOptionsPending, error, refresh, clear 
-// const { data } = useFetch<{data: {[key: string]: any, meta: any}}>(`${apiBaseUrl}/api/v1/settings/location-types`, {baseURL: apiBaseUrl})
-// const locationTypeOptions = ref([...data.value?.data.locationTypes])
-// When the map is ready
+
 function onMapReady() {
   // Access the Leaflet map instance
   console.log(map?.value?.leafletObject)
   console.log('Map Ready')
+}
+
+function clearMap(){
+  markers.value = []
+  selectedLocation.value = undefined
+}
+
+async function refreshMap(){
+  globalLoader.value = true;
+  try {   
+    await getSavedLocations()
+    await getLocationTypes()
+    await getDeviceCommands()
+    await getUserIfLoggedIn()
+  } catch (error: any) {
+    console.log({ error })
+  } finally {
+    globalLoader.value = false;
+  }
 }
 
 function changePerspective({ lat, lng, zoom = 10, select = false }: { lat: number, lng: number, zoom?: number, select?: boolean }) {
@@ -164,6 +176,7 @@ if (Object.keys(query).length) {
   const { lat, lng } = query
   if (!selectedLocation.value) selectedLocation.value = { lat: Number(lat) ?? 0, lng: Number(lng) ?? 0 }
 }
+
 function context(e: any) {
   console.log({ e });
   switch (e) {
@@ -235,12 +248,13 @@ function createMarkerIcon({ url, type = 'dot' }: { url?: string, type?: string }
 
 async function moveToUserLocation() {
   const result = await getUserLocation()
+  console.log({result})
   if (result instanceof GeolocationPosition) {
     const { coords: { latitude: lat, longitude: lng } } = result
     mapCenter.value = [lat, lng]
     userLocation.value = [lat, lng];
     setTimeout(() => {
-      mapZoom.value = 15
+      mapZoom.value = mapZoom.value > 15 ? mapZoom.value + 1 : 15
     }, 800);
     console.log("Move to user location");
     console.log({ result });
@@ -251,12 +265,17 @@ function updateSelectedLocationType(e: any) {
   console.log({ e });
   selectedLocationType.value = e;
 }
+
 watch([highlightedLocation, locationBrowser], ([newHighlightedLocationValue, newLocationBrowserValue]) => {
   console.log({ newHighlightedLocationValue, newLocationBrowserValue })
   if (newHighlightedLocationValue) {
     const highlight = savedLocations.value.find(x => x.id === newHighlightedLocationValue)
+    
     if (highlight) {
-      mapCenter.value = [highlight.latitude, highlight.longitude + 5]
+      let shift = 0
+      if(locationBrowser.value) shift +=  0.02
+      if(mainNav.value) shift -= 0.010
+      mapCenter.value = [Number(highlight.latitude), Number(highlight.longitude) + shift]
     }
   }
 })
@@ -265,7 +284,7 @@ const polyline = computed(() => [...markers.value, mouseLocation.value])
 async function handleLocationCreated() {
   selectedLocation.value = undefined
   toggle('formInputNav', false)
-  await getSavedLocations()
+  await getLocations()
 }
 </script>
 <template>
@@ -384,7 +403,27 @@ async function handleLocationCreated() {
           </v-card-text>
         </v-card>
 
-        <!-- Request full screen button -->
+        <!-- Refresh Map Button -->
+        <v-card tile elevation="0" style="position: absolute; bottom: 64px; right: 134px; z-index: 4;" floating>
+          <v-card-text class="pa-0 d-flex align-center justify-center" style="width: 48px">
+            <v-btn @click="clearMap" stacked style="height: 36px; width: 36px" class="px-0"
+              tile :color="'primary'"><v-icon>mdi-new-box</v-icon>
+              <v-tooltip activator="parent" location="top">Clear Map</v-tooltip>
+            </v-btn>
+          </v-card-text>
+        </v-card>
+
+        <!-- Refresh Map Button -->
+        <v-card tile elevation="0" style="position: absolute; bottom: 64px; right: 77px; z-index: 4;" floating>
+          <v-card-text class="pa-0 d-flex align-center justify-center" style="width: 48px">
+            <v-btn @click="refreshMap" stacked style="height: 36px; width: 36px" class="px-0"
+              tile :color="'primary'"><v-icon>mdi-refresh</v-icon>
+              <v-tooltip activator="parent" location="top">Refresh Map</v-tooltip>
+            </v-btn>
+          </v-card-text>
+        </v-card>
+
+        <!-- Location Browser Toggle Button -->
         <v-card tile elevation="0" style="position: absolute; bottom: 20px; right: 191px; z-index: 4;" floating>
           <v-card-text class="pa-0 d-flex align-center justify-center" style="width: 48px">
             <v-btn @click="locationBrowser = !locationBrowser" stacked style="height: 36px; width: 36px" class="px-0"
@@ -536,6 +575,20 @@ async function handleLocationCreated() {
               <v-item-group selected-class="bg-primary" v-model="highlightedLocation">
                 <v-container>
                   <v-row>
+                    <v-col cols="12" v-if="!filteredSavedLocations.length">
+                      <v-alert
+                        border="start"
+                        close-label="Close Alert"
+                        title="No Results"
+                        class="mx-0"
+                        type="info"
+                        variant="tonal"
+                        prominent
+                        v-if="!filteredSavedLocations.length"
+                      >
+                        No results.
+                      </v-alert>
+                    </v-col>
                     <v-slide-y-transition group>
                       <v-col v-for="n in filteredSavedLocations" :key="n" cols="12" md="12">
                         <v-item v-slot="{ isSelected, selectedClass, toggle }" :value="n.id">
@@ -550,9 +603,6 @@ async function handleLocationCreated() {
               </v-item-group>
             </v-card-text>
             <v-divider></v-divider>
-            <!-- <v-card-actions>
-
-            </v-card-actions> -->
           </v-card>
 
         </v-navigation-drawer>
@@ -565,9 +615,6 @@ async function handleLocationCreated() {
     </div>
     <v-navigation-drawer :style="{ minWidth: xs && mapSettingsNav ? '90vw' : 'auto' }" location="right"
       :disable-resize-watcher="true" :disable-route-watcher="true" v-model="mapSettingsNav">
-      <!-- <div>
-        <p :key="mapZoom">{{ mapZoom }}</p>
-      </div> -->
       <MapSettingsNav
         @update:selected-city="(e) => changePerspective({ lat: e?.latitude || 0, lng: e?.longitude || 0, zoom: 12, select: Boolean(true) })"
         @update:selected-state="(e) => changePerspective({ lat: e?.latitude || 0, lng: e?.longitude || 0, zoom: 9 })"

@@ -2,10 +2,22 @@
   import { VSonner } from '@neoncoder/vuetify-sonner'
   import '@neoncoder/vuetify-sonner/style.css'
   import GlobalLoader from './components/Shared/GlobalLoader.vue';
+  import { useDeviceStore } from '~/stores/devices';
+  import { useSideNavStore } from '~/stores/sidenav';
 
   const authStore = useAuthStore()
+  const { getDeviceCommands } = useDeviceStore()
+  const { globalLoader } = storeToRefs(useSideNavStore())
   onBeforeMount(async () => {
-    await authStore.getUserIfLoggedIn()
+    globalLoader.value = true
+    try {
+      await getDeviceCommands()
+      await authStore.getUserIfLoggedIn()
+    } catch (error: any) {
+      console.log({ error })
+    } finally {
+      globalLoader.value = false
+    }
   })
 </script>
 
@@ -14,7 +26,6 @@
     <VSonner position="bottom-left" :visible-toasts="5":expand="true" />
     <NuxtLayout>
       <NuxtPage />
-      <!-- <NuxtWelcome /> -->
     </NuxtLayout>
     <GlobalLoader />
   </div>

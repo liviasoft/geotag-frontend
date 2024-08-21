@@ -2,7 +2,9 @@
 import PocketBase from 'pocketbase';
 
 export default defineNuxtPlugin(async () => {
-  const pb = new PocketBase('http://127.0.0.1:8090');
+  const config = useRuntimeConfig();
+  const pbUrl = config.public.POCKETBASE_URL;
+  const pb = new PocketBase(pbUrl);
 
   // const cookie = useCookie('pb_auth', {
   //   path:     '/',

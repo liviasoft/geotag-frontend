@@ -23,6 +23,7 @@
     "@vueuse/core": "^10.11.0",
     "@vueuse/nuxt": "^10.9.0",
     "change-case": "^5.4.4",
+    "chart.js": "^4.4.3",
     "leaflet.markercluster": "^1.5.3",
     "nuxt": "^3.11.2",
     "nuxt3-leaflet": "^1.0.12",
@@ -30,6 +31,7 @@
     "pocketbase": "^0.21.2",
     "socket.io-client": "^4.7.5",
     "vue": "^3.4.21",
+    "vue-chartjs": "^5.3.1",
     "vue-router": "^4.3.0",
     "vuetify-nuxt-module": "^0.13.4"
   },
