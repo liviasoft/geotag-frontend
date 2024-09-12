@@ -82,7 +82,7 @@
         class="mx-0 mt-1"
         link
         label
-        
+        tile
       >
         <v-avatar start size="32px" tile>
           <v-img v-if="selectedCountryCode" :src="`/icons/flags/32x32/${selectedCountryCode?.iso2.toLowerCase()}.png`"></v-img>
@@ -97,6 +97,7 @@
       </v-chip>
     </template>
     <v-card
+      tile
       width="400"
       min-height="500"
       max-height="500"
@@ -108,7 +109,7 @@
       </v-card-title>
       <v-divider></v-divider>
       <v-card-title class="py-0 pt-0">
-        <v-text-field v-model="searchTerm" :loading="loading" :disabled="loading" class="mt-n4"hide-details variant="plain" style="font-size: 64px;" single-line :placeholder="loading ? 'Loading. Please wait...' : 'Search'" autofocus prepend-inner-icon="mdi-magnify" clearable></v-text-field>
+        <v-text-field tile v-model="searchTerm" :loading="loading" :disabled="loading" class="mt-n4"hide-details variant="plain" style="font-size: 64px;" single-line :placeholder="loading ? 'Loading. Please wait...' : 'Search'" autofocus prepend-inner-icon="mdi-magnify" clearable></v-text-field>
       </v-card-title>
       <v-divider></v-divider>
       <v-card-text class="pa-0">
@@ -162,6 +163,7 @@
           
           <v-spacer></v-spacer>
           <v-btn color="primary"
+            tile
             variant="elevated"
             class="text-body-1 ml-4 pt-1"
             elevation-24 @click="confirmSelectedCountryCode">OK</v-btn>

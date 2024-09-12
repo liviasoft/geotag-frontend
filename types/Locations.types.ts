@@ -54,13 +54,19 @@ export const locationFields = [
   'description',
   'deviceData',
   'city',
+  'contacts',
   'image',
   'imageUrl',
   'created',
   'updated',
   'connectionStatus',
-  'lastConnectionStatusCheck'
+  'lastConnectionStatusCheck',
+  'useRemoteConnection',
+  'remoteHTTPUrl',
+  'remoteTCPUrl',
+  'isLocked',
 ]
+
 export type SavedLocation = {
   id: string;
   name: string;
@@ -81,6 +87,11 @@ export type SavedLocation = {
   imageUrl?: string,
   connectionStatus?: string,
   lastConnectionStatusCheck?: Date,
+  useRemoteConnection: boolean,
+  remoteHTTPUrl?: string,
+  remoteTCPUrl?: string,
+  isLocked?: boolean,
+  contacts?: Array<LocationContact>,
   connectionTestLoading: boolean,
   deviceFilesLoading: boolean,
 }

@@ -19,7 +19,7 @@ export const useAuthStore = defineStore('auth', () => {
   // const refreshToken = ref<RemovableRef<string> | null>(useLocalStorage<string>("refreshToken", null));
   const accessToken = useCookie('accessToken')
   const refreshToken = useCookie('refreshToken')
-  const makeAuthenticatedRequest = ({url, method = 'GET', data = {}, type = 'JSON'}: AuthRequestOptions): Promise<{response: any, error: any}> => {
+  const makeAuthenticatedRequest = ({url, method = 'GET', data = {}, type = 'JSON'}: AuthRequestOptions, showToast: boolean = true): Promise<{response: any, error: any}> => {
     return new Promise(async (resolve, reject) => {
       const headers = { authorization:  `Bearer ${accessToken.value}`}
       try {   
@@ -31,13 +31,14 @@ export const useAuthStore = defineStore('auth', () => {
           }
         }
         const {error, response} = await makeRequest({url, body: data, method, headers}, type)
-        console.log({error, response})
         if(response?.newAccessToken) accessToken.value = response.newAccessToken
         if(['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)){
-          if(response?.success) {
-            toast.success(response.message)
-          } else {
-            toast.error(response.message)
+          if (showToast) {
+            if(response?.success) {
+              toast.success(response.message)
+            } else {
+              toast.error(response.message)
+            }
           }
         }
         if(response.success){
@@ -48,12 +49,14 @@ export const useAuthStore = defineStore('auth', () => {
       } catch (err: any) {
         console.log({err})
         const {response} = err
-        if(response){
-          if(['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)){
-            toast.error(response.message)
+        if(showToast){
+          if(response){
+            if(['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)){
+              toast.error(response.message)
+            }
+          } else {
+            toast.error(err.message)
           }
-        } else {
-          toast.error(err.message)
         }
         reject(err)
       }
@@ -86,10 +89,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const getUserIfLoggedIn = async () => {
-    console.log({accessToken: accessToken.value})
-    console.log({refreshToken: refreshToken.value});
     const {response, error} = await makeAuthenticatedRequest({ url: 'api/v1/auth/me' })
-    console.log({response});
     if(response.success){
       const { meta, user: fetchedUser} = response.data
       if(meta){

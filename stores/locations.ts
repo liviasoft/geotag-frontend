@@ -13,7 +13,6 @@ export const useLocationStore = defineStore('locations', () => {
 
   const getLocationTypes = async () => {
     const {error, response} = await makeAuthenticatedRequest({ url: 'api/v1/settings/location-types', method: 'GET', type: 'JSON', data: null})
-    console.log({response, error})
     if(response?.data?.locationTypes) {
       locationTypes.value = response.data.locationTypes
     }
@@ -32,10 +31,9 @@ export const useLocationStore = defineStore('locations', () => {
 
   function toggleConnectionTestLoadingState (locationId: string, loading = true) {
     const loc = savedLocations.value.find(x => x.id === locationId);
-    console.log({loc})
+    
     if(loc){
       loc.connectionTestLoading = loading
-      console.log({updated: loc})
     }
   }
 
@@ -57,6 +55,14 @@ export const useLocationStore = defineStore('locations', () => {
     }
   }
 
+  function fetchLocationDetails(locationId: string): Promise<{ error?: any, response?: any}>{
+    return new Promise((resolve, reject) => {
+      makeAuthenticatedRequest({ url: `api/v1/locations/sites/${locationId}`})
+      .then(result => resolve(result))
+      .catch(error => reject(error))
+    })
+  }
+
   const filteredSavedLocations = computed(() => {
     if (selectedLocationTypeFilter.value === 'all') return savedLocations.value
     return savedLocations.value.filter(l => l.locationType === selectedLocationTypeFilter.value)
@@ -69,6 +75,7 @@ export const useLocationStore = defineStore('locations', () => {
     toggleConnectionTestLoadingState,
     toggleDeviceFilesLoadingState,
     updateSavedLocation,
+    fetchLocationDetails,
     filteredSavedLocations,
     selectedLocationTypeFilter,
     savedLocations,

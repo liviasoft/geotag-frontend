@@ -3,6 +3,8 @@
   import { storeToRefs } from 'pinia';
   import { useDisplay } from 'vuetify';
   import { toast } from '@neoncoder/vuetify-sonner';
+  const config = useRuntimeConfig();
+  const adminUrl = config.public.POCKETBASE_URL;
   const {mobile} = useDisplay();
   const navStore = useSideNavStore()
   const authStore = useAuthStore()
@@ -20,13 +22,13 @@
     // toast.toastOriginal.promise(failPromise, {
       loading: 'Logging out...',
       success: (data) => {
-        console.log({data})
+        
         toast.success(data?.response?.message ? data.response.message : 'You have been logged out')
         return `Logged out`
       },
       error: (data) => {
         toast.error(data?.response?.message ? data.response.message : 'You have been logged out')
-        console.log({data})
+        
         return `Error: ${data?.response?.message}`
       }
     })
@@ -38,6 +40,7 @@
     <v-navigation-drawer :disable-resize-watcher="true" :disable-route-watcher="true" v-model="mainNav">
       <div style="height: 64px;" class="py-2 pl-2z">
       <v-img src="/images/liviasoftfulllogo.png"></v-img></div>
+      <v-divider></v-divider>
       <v-list v-if="user">
         <v-list-item
           :prepend-avatar="user?.avatarUrl ? user.avatarUrl : '/images/default.jpeg'"
@@ -59,17 +62,20 @@
             <v-icon icon="mdi-map" class="mr-n4"></v-icon>
           </template>
           <v-list-item-title><p class="mb-0 text-subtitle-1">Map</p></v-list-item-title>
+
         </v-list-item>
-        <v-list-item value="admin" variant="flat">
-          <template v-slot:prepend style="display: block">
-            <v-icon icon="mdi-security" class="mr-n4"></v-icon>
-          </template>
-          <v-list-item-title><p class="mb-0 text-subtitle-1">Admin</p></v-list-item-title>
-        </v-list-item>
+        <NuxtLink :to="`${adminUrl}/_/`" target="_blank" external class="text-decoration-none">
+          <v-list-item value="admin" variant="flat">
+            <template v-slot:prepend style="display: block">
+              <v-icon icon="mdi-security" class="mr-n4"></v-icon>
+            </template>
+            <v-list-item-title><p class="mb-0 text-subtitle-1 text-decoration-none">Admin</p></v-list-item-title>
+          </v-list-item>
+        </NuxtLink>
       </v-list>
       <template v-slot:append>
         <div class="pa-2">
-          <v-btn @click="logout" block>
+          <v-btn tile @click="logout" block>
             Logout
           </v-btn>
         </div>
@@ -144,7 +150,7 @@
         </v-card-text>
         <v-divider></v-divider>
         <v-card-actions>
-          <v-btn @click="logout" class="text-none" large block><v-icon>mdi-logout</v-icon> Logout</v-btn>
+          <v-btn tile @click="logout" class="text-none" large block><v-icon>mdi-logout</v-icon> Logout</v-btn>
         </v-card-actions>
       </v-card> 
     </v-menu>

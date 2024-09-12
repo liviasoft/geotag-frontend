@@ -40,7 +40,7 @@
         loading.value = false
       }
     })
-    console.log({ data })
+    
   }
 
   function reset(){
@@ -58,9 +58,9 @@
 
         <div class="d-flex" style="width: 100%;">
 
-          <v-text-field :loading="loading" @keydown.enter.exact="saveNote" v-model="note"density="compact" hide-details placeholder="Add a note about this location">
+          <v-text-field tile :loading="loading" @keydown.enter.exact="saveNote" v-model="note"density="compact" hide-details placeholder="Add a note about this location">
             <template v-slot:append>
-              <v-btn @click="saveNote" :loading="loading" class="mx-0" variant="tonal" color="primary" appendIcon="mdi-send">
+              <v-btn tile @click="saveNote" :loading="loading" class="mx-0" variant="tonal" color="primary" appendIcon="mdi-send">
                 Send
               </v-btn>
             </template>

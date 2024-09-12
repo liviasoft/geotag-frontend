@@ -9,6 +9,8 @@ export default defineNuxtConfig({
     public: {
       API_BASE_URL: process.env.API_BASE_URL,
       POCKETBASE_URL: process.env.POCKETBASE_URL,
+      PB_ADMIN_EMAIL: process.env.PB_ADMIN_EMAIL,
+      PB_ADMIN_PASSWORD: process.env.PB_ADMIN_PASSWORD,
     }
   }
   // experimental: {

@@ -31,7 +31,7 @@
       
       // const {res} = await fetch(url.value);
       const {response: {data: {cities}}} = await authStore.makeAuthenticatedRequest({url: url.value});
-      console.log({sample: cities[0]})
+      
       nearestCities.value = cities;
       emit('update:selectedNearbyCity', cities[0])
     } catch (error: any) {

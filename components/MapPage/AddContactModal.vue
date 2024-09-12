@@ -41,11 +41,9 @@
       name: name.value,
       phoneCode: phoneCode.value,
     }
-    console.log({data})
     try {
       loading.value = true;
       const {response} = await authStore.makeAuthenticatedRequest({url: 'api/v1/settings/contacts', method: 'POST', data})
-      console.log({response});
       if(!response?.success) {
         if (response?.error?.email) errors.value.email = response.error.email
         if (response?.error?.phone) errors.value.phone = response.error.phone
@@ -70,24 +68,24 @@
 <template>
   <v-dialog max-width="500" v-model="dialog">
   <template v-slot:activator="{ props: activatorProps }">
-    <v-btn v-bind="activatorProps" text="Add New Contact"
+    <v-btn tile v-bind="activatorProps" text="Add New Contact"
       variant="tonal" prepend-icon="mdi-plus" size="small" color="warning" class="mb-2"></v-btn>
    
   </template>
 
   <template v-slot:default>
-    <v-card>
+    <v-card tile>
       <v-card-title class="bg-primary text-white d-flex align-center"><v-icon class="mr-2">mdi-account-box</v-icon><p>Add New Contact</p><v-spacer></v-spacer> <v-btn @click="reset" icon="mdi-close" size="small" variant="text"></v-btn></v-card-title>
       <v-card-text class="pb-0">
-        <v-text-field @keydown.enter="addNewContact" v-model="name" autofocus placeholder="John Doe" class="mb-2" label="Contact Name" variant="outlined" density="compact" hide-details></v-text-field>
-        <v-text-field @keydown.enter="addNewContact" :error="Boolean(errors.email)" @focus="errors.email = ''" v-model="email" placeholder="personorcompany@example.com" type="email" class="mb-2" label="Email" variant="outlined" density="compact" hide-details></v-text-field>
-        <v-text-field @keydown.enter="addNewContact" v-model="address" placeholder="Floor No, Building No, Street, District" type="text" class="mb-2" label="Street Address" variant="outlined" density="compact" hide-details></v-text-field>
+        <v-text-field tile @keydown.enter="addNewContact" v-model="name" autofocus placeholder="John Doe" class="mb-2" label="Contact Name" variant="outlined" density="compact" hide-details></v-text-field>
+        <v-text-field tile @keydown.enter="addNewContact" :error="Boolean(errors.email)" @focus="errors.email = ''" v-model="email" placeholder="personorcompany@example.com" type="email" class="mb-2" label="Email" variant="outlined" density="compact" hide-details></v-text-field>
+        <v-text-field tile @keydown.enter="addNewContact" v-model="address" placeholder="Floor No, Building No, Street, District" type="text" class="mb-2" label="Street Address" variant="outlined" density="compact" hide-details></v-text-field>
         <v-row>
           <v-col cols="4" class="flex-grow-1 flex-shrink-0 pr-0">
             <LazyPhoneCodeSelect @update:selected-country-code="countryCodeSelected" :selected-country-code="countryCode" />
           </v-col>
           <v-col cols="8" class="flex-shrink-1 flex-grow-0">
-            <v-text-field v-model="phone" :error="Boolean(errors.phone)" @focus="errors.phone=''" @keydown.enter="addNewContact" placeholder="08012345678" type="text" class="mb-2" label="Phone Number" variant="outlined" density="compact" hide-details></v-text-field>
+            <v-text-field tile v-model="phone" :error="Boolean(errors.phone)" @focus="errors.phone=''" @keydown.enter="addNewContact" placeholder="08012345678" type="text" class="mb-2" label="Phone Number" variant="outlined" density="compact" hide-details></v-text-field>
           </v-col>
         </v-row>
       </v-card-text>
@@ -95,6 +93,7 @@
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn
+          tile
           color="error"
           variant="text"
           class="text-body-1 pt-1"
@@ -104,6 +103,7 @@
           Cancel
         </v-btn>
         <v-btn
+          tile
           color="primary"
           variant="elevated"
           @click="addNewContact"

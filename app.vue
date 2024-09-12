@@ -8,7 +8,7 @@
   const authStore = useAuthStore()
   const { getDeviceCommands } = useDeviceStore()
   const { globalLoader } = storeToRefs(useSideNavStore())
-  onBeforeMount(async () => {
+  onMounted(async () => {
     globalLoader.value = true
     try {
       await getDeviceCommands()

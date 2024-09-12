@@ -24,7 +24,6 @@ import AddContactModal from './AddContactModal.vue';
     try {
       const res = await fetch(url.value);
       const {data: {contacts: fetchedContacts}} = await res.json();
-      console.log({sample: fetchedContacts[0]})
       contacts.value = fetchedContacts;
       // selectedContacts.value = []
       // if(props.selectedContactIds){

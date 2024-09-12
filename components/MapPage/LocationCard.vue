@@ -28,14 +28,14 @@ async function testDeviceConnection(){
   toast.toastOriginal.promise(makeAuthenticatedRequest({ url }), {
     loading: `${props.location.name}: Testing Device Connection...`,
     success: (data: any) => {
-      console.log({data})
+      
       toast.success(data?.response?.message ? data.response.message : 'Connection Test successful')
       toggleConnectionTestLoadingState(props.location.id, false)
       return `Connection Test Successful`
     },
     error: (data: any) => {
       toast.error(data?.response?.message ? data.response.message : 'Connection Test failed')
-      console.log({data})
+      
       toggleConnectionTestLoadingState(props.location.id, false)
       return `Error: ${data?.response?.message}`
     }
@@ -43,7 +43,7 @@ async function testDeviceConnection(){
 }
 </script>
 <template>
-  <v-card border
+  <v-card border tile
     :style="{ transition: 'all 0.3s ease', transform: isSelected ? 'scale(1.05)' : 'scale(1)', borderColor: isSelected ? 'steelblue' : '' }"
     class="mx-2 my-0 d-flex align-start" :class="isSelected ? 'elevated-light': ''" :flat="!isSelected" :height="height" :width="width + height">
     <div :style="{ width: `${height}px`, borderRight: '1px solid #eee' }">
@@ -58,7 +58,7 @@ async function testDeviceConnection(){
             location.city?.state_name }}</v-card-subtitle>
       </div>
       <v-divider :color="isSelected ? 'primary': ''"></v-divider>
-      <v-chip class="mx-2 mt-2" :color="isSelected ? 'primary' : ''" label size="small">
+      <v-chip class="mx-2 mt-2" :color="isSelected ? 'primary' : ''" label size="small" tile>
         <v-avatar :image="location.locationTypeData?.iconUrl" start></v-avatar>
         {{ changeCase.capitalCase(location.locationTypeData?.name || '') }}
       </v-chip>
@@ -66,14 +66,14 @@ async function testDeviceConnection(){
         <span class="text-medium-emphasis">
           Status 
         </span> 
-        <v-chip v-if="location.connectionStatus" class="my-2 mx-1" size="small" label :color="connectionStatusColor(location.connectionTestLoading ? 'PENDING': location.connectionStatus)" variant="tonal">
+        <v-chip tile v-if="location.connectionStatus" class="my-2 mx-1" size="small" label :color="connectionStatusColor(location.connectionTestLoading ? 'PENDING': location.connectionStatus)" variant="tonal">
           <v-icon :icon="connectionStatusIcon(location.connectionTestLoading ? 'PENDING': location.connectionStatus)" start></v-icon>
           {{ location.connectionTestLoading ? 'PENDING': location.connectionStatus }}
         </v-chip>
         <v-spacer></v-spacer>
         <v-tooltip text="Run Connection Test">
           <template v-slot:activator="{ props }">
-            <v-btn v-bind="props" :loading="location.connectionTestLoading" @click.stop="testDeviceConnection" icon="mdi-restore" size="x-small" variant="text"></v-btn>
+            <v-btn tile v-bind="props" :loading="location.connectionTestLoading" @click.stop="testDeviceConnection" icon="mdi-restore" size="x-small" variant="text"></v-btn>
           </template>
         </v-tooltip>
       </div>

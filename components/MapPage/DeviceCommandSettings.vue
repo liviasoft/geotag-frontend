@@ -38,14 +38,14 @@
         deleteDeviceCommand(selectedCommand.value.id), {
           loading: `Deleting Device Command...`,
           success: (data: any) => {
-            console.log({data})
+            
             selectedCommand.value = null
             update.value = false;
             query()
             return `Device Command deleted`
           },
           error: (data: any) => {
-            console.log({data})
+            
             const {response, error, message} = data
             return `Error: ${response ? data?.response?.message : error?.message ? error.message : message}`
           },
@@ -69,29 +69,50 @@
       </v-card-title>
       <v-expand-transition>
         <v-card-text v-show="show" class="py-4"style="max-height: calc(98vh - 164px); overflow-y: scroll;">
-          <v-autocomplete
-            label="Command List"
-            placeholder="Command List"
-            :loading="loading"
-            variant="solo"
-            density="compact"
-            single-line
-            hide-details
-            v-model="selectedCommand"
-            return-object
-            clearable
-            class="mb-2"
-            :items="deviceCommands"
-          >
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            db;dsx
-        </v-autocomplete>
+          <v-autocomplete 
+          active
+          prepend
+          auto-select-first
+          hideDetails
+          flat
+          tile
+          clearable
+          density="comfortable"
+          
+          v-model="selectedCommand"
+          
+          return-object
+          :items="deviceCommands" 
+          :placeholder="`Command List (${deviceCommands.length})`"
+            variant="outlined">
+            <template v-slot:append-inner>
+        </template>
+        <template v-slot:item="{ props, item }">
+          <v-list-item max-width="400px"
+          v-bind="props"
+                        >
+                        
+                        <v-list-item-subtitle><span>{{ item.raw.command }}</span> - <span style="line-height: 1;" class="text-caption">{{
+                          item.raw.description }}</span>
+                        </v-list-item-subtitle>
+                        <template v-slot:append>
+                          <v-chip tile size="small" label :color="item.raw.commandType === 'Query' ? 'purple' : 'warning'">{{
+                            item.raw.commandType.charAt(0)
+                          }}
+                          </v-chip>
+                        </template>
+
+                      </v-list-item>
+    </template>
+          </v-autocomplete>
+          
           <v-expand-transition>
             <v-card v-show="Boolean(selectedCommand)" class="pa-2 my-0" color="primary" variant="tonal">
               <p class="font-weight-bold">{{ selectedCommand?.command }}</p>
               <v-divider></v-divider>
               <div class="d-flex align-center">
 
-                <v-chip class="my-2 mr-2" label :color="selectedCommand?.commandType === 'Query' ? 'purple' : 'warning'">{{ selectedCommand?.commandType.charAt(0)
+                <v-chip tile class="my-2 mr-2" label :color="selectedCommand?.commandType === 'Query' ? 'purple' : 'warning'">{{ selectedCommand?.commandType.charAt(0)
                       }}</v-chip>
               <p>{{ selectedCommand?.title }}</p>
             </div>
@@ -101,9 +122,9 @@
               </div>
               <v-divider></v-divider>
               <div class="d-flex align-center mt-2">
-                <v-btn @click="deleteCommand" prepend-icon="mdi-delete" class="px-0" variant="text" color="error" size="small">Delete</v-btn>
+                <v-btn tile @click="deleteCommand" prepend-icon="mdi-delete" class="px-0" variant="text" color="error" size="small">Delete</v-btn>
                 <v-spacer></v-spacer>
-                <v-btn @click="editCommand" prepend-icon="mdi-refresh" variant="tonal" color="secondary" size="small">Update</v-btn>
+                <v-btn tile @click="editCommand" prepend-icon="mdi-refresh" variant="tonal" color="secondary" size="small">Update</v-btn>
               </div>
             </v-card>
           </v-expand-transition>

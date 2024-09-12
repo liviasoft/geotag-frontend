@@ -11,8 +11,9 @@ import { ref, onMounted, computed, watch } from "vue";
 import { toast } from '@neoncoder/vuetify-sonner'
 import L from 'leaflet';
 import { useDisplay } from 'vuetify';
-import type { LocationType, SavedLocation } from '../types/Locations.types';
+import type { LocationType } from '../types/Locations.types';
 import MapSettingsNav from '~/components/MapPage/MapSettingsNav.vue';
+import MapSearchInput from '~/components/MapPage/MapSearchInput.vue';
 
 const { xs, smAndDown } = useDisplay();
 const { getUserIfLoggedIn } = useAuthStore()
@@ -24,13 +25,13 @@ async function getLocations() {
   toast.toastOriginal.promise(getSavedLocations(), {
     loading: `Fetching Saved Locations...`,
     success: (data: any) => {
-      console.log({data})
+      
       toast.success(data?.response?.message ? data.response.message : 'Fetched Saved Locations')
       return `Marked Saved Locations`
     },
     error: (data: any) => {
       toast.error(data?.response?.message ? data.response.message : 'Error Fetching saved locations')
-      console.log({data})
+      
       return `Error: ${data?.response?.message}`
     },
     finally: () => {
@@ -117,6 +118,7 @@ async function refreshMap(){
     await getLocationTypes()
     await getDeviceCommands()
     await getUserIfLoggedIn()
+    clearMap()
   } catch (error: any) {
     console.log({ error })
   } finally {
@@ -150,10 +152,6 @@ function mouseMove(e: any) {
     x.value = X
     y.value = Y
     mouseLocation.value = [lat, lng]
-    // if (markers.value.length > 1){
-    //   markers.value[markers.value.length - 1] = [lat, lng]
-    // }
-    // console.log({e, lat, lng, x, y});
   }
 }
 
@@ -165,16 +163,21 @@ function show(e: any) {
   selectedLocation.value = e.latlng
   x.value = e.originalEvent.clientX
   y.value = e.originalEvent.clientY
-  console.log({ x, y, selectedLocation });
   nextTick(() => {
     showMenu.value = true
   })
 }
 const { query } = useRoute()
-console.log({ query })
 if (Object.keys(query).length) {
-  const { lat, lng } = query
-  if (!selectedLocation.value) selectedLocation.value = { lat: Number(lat) ?? 0, lng: Number(lng) ?? 0 }
+  const { lat, lng, location } = query
+  if(lat && lng){
+    changePerspective({lat: Number(lat), lng: Number(lng), zoom: 15})
+    if(location) {
+      // locationBrowser.value = true
+      highlightedLocation.value = String(location)
+    }
+  }
+  // if (!selectedLocation.value) selectedLocation.value = { lat: Number(lat) ?? 0, lng: Number(lng) ?? 0 }
 }
 
 function context(e: any) {
@@ -267,7 +270,6 @@ function updateSelectedLocationType(e: any) {
 }
 
 watch([highlightedLocation, locationBrowser], ([newHighlightedLocationValue, newLocationBrowserValue]) => {
-  console.log({ newHighlightedLocationValue, newLocationBrowserValue })
   if (newHighlightedLocationValue) {
     const highlight = savedLocations.value.find(x => x.id === newHighlightedLocationValue)
     
@@ -286,6 +288,24 @@ async function handleLocationCreated() {
   toggle('formInputNav', false)
   await getLocations()
 }
+
+function updateSearch(e: any){
+  console.log({e})
+  if(e && typeof e === 'object'){
+    const { latitude, longitude, type, value } = e;
+    if(latitude && longitude){
+      changePerspective({ lat: Number(latitude), lng: Number(longitude), zoom: type !== 'Location' ? 12 : mapZoom.value < 15 ? mapZoom.value + 1 : mapZoom.value })
+    }
+    if(type === 'Location' && latitude && longitude){
+      highlightedLocation.value = value
+    }
+  }
+}
+
+function clearSearch(){
+  if(highlightedLocation.value) highlightedLocation.value = null;
+  if(locationBrowser.value) locationBrowser.value = false;
+}
 </script>
 <template>
   <UseFullscreen v-slot="{ toggle: toggleMapFullscreen, isFullscreen }">
@@ -297,27 +317,8 @@ async function handleLocationCreated() {
           <v-card-text class="pa-0 d-flex align-center">
             <v-btn @click="locationBrowser = !locationBrowser" stacked style="height: 48px;" tile
               :color="locationBrowser ? 'warning' : 'primary'"><v-icon>mdi-format-list-text</v-icon></v-btn>
-            <v-autocomplete prepend-inner-icon="mdi-map-marker" placeholder="Search by City or State" flat
-              variant="solo" density="compact" hide-details prepend></v-autocomplete>
-            <v-btn stacked style="height: 48px;" tile color="primary"><v-icon>mdi-magnify</v-icon></v-btn>
-            <!-- <v-toolbar
-              dense
-              floating
-            >
-              <v-text-field
-                prepend-icon="mdi-magnify"
-                hide-details
-                single-line
-              ></v-text-field>
-
-              <v-btn icon>
-                <v-icon>mdi-crosshairs-gps</v-icon>
-              </v-btn>
-
-              <v-btn icon>
-                <v-icon>mdi-dots-vertical</v-icon>
-              </v-btn>
-            </v-toolbar> -->
+            <MapSearchInput @update:search="updateSearch" @clear:search="clearSearch" />
+            
           </v-card-text>
         </v-card>
         <!-- Move to user location button -->
@@ -502,6 +503,7 @@ async function handleLocationCreated() {
             :lat-lng="[selectedLocation.lat, selectedLocation.lng]" style="cursor: inherit" />
           <LocationMarker v-for="loc in savedLocations" :lat="Number(loc.latitude)" :lng="Number(loc.longitude)"
             :location="loc" :highlight="loc.id === highlightedLocation"
+            @location:deleted="refreshMap"
             :excluded="!(filteredSavedLocations.map(x => x.id).includes(loc.id))" />
           <!-- <LMarker  @click.stop="markerClick" :icon="createMarkerIcon()" :lat-lng="mapCenter" /> -->
           <!-- <LMarker  @click.stop="markerClick" :lat-lng="mapCenter" /> -->
@@ -551,13 +553,13 @@ async function handleLocationCreated() {
             <v-card-title class="d-flex align-center bg-grey-lighten-4 px-0" style="height: 52px">
               <v-slide-group v-model="selectedLocationTypeFilter" center-active show-arrows>
                 <v-slide-group-item v-slot="{ isSelected, toggle }" value="all">
-                  <v-chip class="ma-2" :color="isSelected ? 'primary' : ''" label @click="toggle">
+                  <v-chip tile class="ma-2" :color="isSelected ? 'primary' : ''" label @click="toggle">
                     <v-icon icon="mdi-label" start></v-icon>
                     All
                   </v-chip>
                 </v-slide-group-item>
                 <v-slide-group-item v-for="n in locationTypes" :key="n" v-slot="{ isSelected, toggle }" :value="n.id">
-                  <v-chip class="ma-2" :color="isSelected ? 'primary' : ''" label @click="toggle">
+                  <v-chip tile class="ma-2" :color="isSelected ? 'primary' : ''" label @click="toggle">
                     <v-avatar :image="n.iconUrl" start></v-avatar>
                     {{ changeCase.capitalCase(n.name) }}
                     <span class="text-medium-emphasis"
@@ -607,9 +609,10 @@ async function handleLocationCreated() {
 
         </v-navigation-drawer>
       </div>
-      <v-navigation-drawer :width="xs ? '90vw' : 256" location="right" :minHeight="isFullscreen ? '100vh' : 'auto'"
+      <v-navigation-drawer location="right" :minHeight="isFullscreen ? '100vh' : 'auto'"
         :disable-resize-watcher="true" :disable-route-watcher="true" v-model="formInputNav">
         <AddLocationForm v-model:location="selectedLocation" @update:location-type="updateSelectedLocationType"
+        @cancel="toggle('formInputNav', false)"
           :location-type="selectedLocationType" @update:location-created="handleLocationCreated" />
       </v-navigation-drawer>
     </div>

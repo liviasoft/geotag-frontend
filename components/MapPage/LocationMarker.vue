@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import L from 'leaflet';
 import { ref } from 'vue';
-import * as changeCase from "change-case";
 import type { SavedLocation, DeviceCommand } from '~/types/Locations.types';
 import { useAuthStore } from '~/stores/auth';
 import { useLocationStore } from '~/stores/locations';
@@ -14,11 +13,17 @@ import EditDeviceDataModal from './EditDeviceDataModal.vue'
 import LocationNotes from './LocationNotes.vue'
 import LocationNoteForm from './LocationNoteForm.vue'
 import DeviceCommandSelectMenu from './DeviceCommandSelectMenu.vue'
+import ConfirmDeleteModal from './ConfirmDeleteModal.vue'
+import LocationMarkerBasicInfo from './LocationMarkerBasicInfo.vue'
+import MeasurementParamsModal from './MeasurementParamsModal.vue'
+import MeasurementProcessInfoModal from './MeasurementProcessInfoModal.vue'
+import ConfirmStartMeasurementModal from './ConfirmStartMeasurementModal.vue'
 
 const { mobile } = useDisplay();
 const fullscreen = ref(false);
 const { $pb } = useNuxtApp();
 const { toggleConnectionTestLoadingState, updateSavedLocation } = useLocationStore();
+const { startDeviceMeasurement, toggleLocationLock } = useDeviceStore();
 const props = defineProps({
   lat: {
     type: Number,
@@ -45,6 +50,7 @@ const props = defineProps({
 const { makeAuthenticatedRequest } = useAuthStore()
 const { connectionStatusColor, connectionStatusIcon } = useUIStore()
 const dialog = ref(false)
+const totalLoading = ref(false)
 function openDialog() {
   dialog.value = true
 }
@@ -65,31 +71,36 @@ async function testDeviceConnection() {
   toast.toastOriginal.promise(makeAuthenticatedRequest({ url }), {
     loading: `${props.location.name}: Testing Device Connection...`,
     success: (data: any) => {
-      console.log({ data })
+      
       toast.success(data?.response?.message ? data.response.message : 'Connection Test successful')
       toggleConnectionTestLoadingState(props.location.id, false)
       return `Connection Test Successful`
     },
     error: (data: any) => {
       toast.error(data?.response?.message ? data.response.message : 'Connection Test failed')
-      console.log({ data })
+      
       toggleConnectionTestLoadingState(props.location.id, false)
       return `Error: ${data?.response?.message}`
     }
   })
 }
 watch([dialog, fullscreen], ([newValue, newFullscreen], [oldValue, oldFullscreen]) => {
-  console.log({ newValue })
   if (newFullscreen !== oldFullscreen) componentKey.value++
-  if (newValue !== oldValue) {
-    tab.value = 'basic'
-    commandSelectMenu.value = false;
+  if (dialog.value && newValue !== oldValue) {
     $pb.collection('locations').subscribe(props.location.id, function (e) {
       console.log(e.action);
       console.log(e.record);
-      updateSavedLocation(props.location.id, e.record)
+      if(e.action === 'update'){
+        delete e.record.contacts
+        delete e.record.addedBy
+        delete e.record.locationType
+        updateSavedLocation(props.location.id, e.record)
+      }
     }, { /* other options like expand, custom headers, etc. */ });
-  } else {
+    componentKey.value++
+  }
+  if(!dialog.value) {
+    tab.value = 'basic'
     commandSelectMenu.value = false;
     $pb.collection('locations').unsubscribe(props.location.id);
   }
@@ -102,17 +113,47 @@ function selectCommand(e: DeviceCommand) {
   commandInput.value = e.command
 }
 const loadingCommand = ref(false)
+const emit = defineEmits(['location:deleted', 'location:updated'])
+async function deleteMarker(){
+  if(loadingCommand.value) {
+    toast.warning('Device is busy');
+    return;
+  }
+  if(totalLoading.value) return;
+  try {
+    totalLoading.value = true
+    toast.toastOriginal.promise(makeAuthenticatedRequest({ url: `api/v1/locations/sites/${props.location.id}`, method: 'DELETE'}), {
+      loading: `${props.location.name}: Deleting Location...`,
+      success: (data: any) => {
+        
+        emit('location:deleted');
+        dialog.value = false;
+        return data?.response?.message ? data.response.message : `Location Deleted: ${props.location.name}`
+      },
+      error: (data: any) => {
+        
+        return data?.response?.message ? data.response.message : 'Error deleting location'
+      },
+      finally: () => {
+        totalLoading.value = false
+      }
+    })
+    console.log({ locationId: props.location.id })
+  } catch (error: any) {
+    console.log({ error });
+  }
+}
 async function sendCommand() {
   if (loadingCommand.value) return;
   try {
     toast.toastOriginal.promise(makeAuthenticatedRequest({ url: `api/v1/locations/sites/${props.location.id}/command`, method: 'POST', data: { command: commandInput.value } }), {
       loading: `${props.location.name}: Sending Command - ${commandInput.value}...`,
       success: (data: any) => {
-        console.log({ data })
+        
         return data?.response?.message ? data.response.message : `Command Executed: ${props.location.name}`
       },
       error: (data: any) => {
-        console.log({ data })
+        
         return data?.response?.message ? data.response.message : 'Error executing command'
       },
       finally: () => {
@@ -122,7 +163,11 @@ async function sendCommand() {
   } catch (error: any) {
     console.log({ error });
   }
-
+}
+async function startMeasurement(e: any){
+  console.log({e});
+  await startDeviceMeasurement({ deviceId: props.location.id, deviceName: props.location.name })
+  await toggleLocationLock({lock: false, locationId: props.location.id})
 }
 </script>
 <template>
@@ -161,7 +206,7 @@ async function sendCommand() {
             <v-menu v-model="commandSelectMenu" activator="#menu-activator" width="350" height="500" :close-on-content-click="false">
               <DeviceCommandSelectMenu @command:select="selectCommand" />
             </v-menu>
-            <v-text-field v-model="commandInput" @keydown.enter.exact="sendCommand"
+            <v-text-field tile v-model="commandInput" @keydown.enter.exact="sendCommand"
               :readonly="loadingCommand || location.connectionStatus !== 'OK' || location.connectionTestLoading"
               placeholder="Send Device Command" prepend-inner-icon="mdi-console" hide-details variant="solo"
               density="compact" single-line></v-text-field>
@@ -182,81 +227,36 @@ async function sendCommand() {
           <v-card-text class="pa-0" style="height: 205px;">
             <v-tabs-window v-model="tab">
               <v-tabs-window-item value="basic">
-                <v-container>
-                  <v-row align="start" justify="center">
-                    <v-col cols="10">
-                      <v-card class="elevated" variant="text">
-                        <v-img :aspect-ratio="1.618" cover
-                          :src="location.imageUrl ? location.imageUrl : '/images/no-image.png'"></v-img>
-                      </v-card>
-                    </v-col>
-                    <v-col cols="10">
-                      <div>
-                        <div class="d-flex align-center mt-0 mb-4">
-                          <v-chip color="primary" label size="large">
-                            <v-avatar :image="location.locationTypeData?.iconUrl" start tile></v-avatar>
-                            {{ changeCase.capitalCase(location.locationTypeData?.name || '') }}
-                          </v-chip>
-                          <v-chip v-if="location.connectionStatus" class="mx-4" label
-                            :color="connectionStatusColor(location.connectionTestLoading ? 'PENDING' : location.connectionStatus)"
-                            variant="tonal" size="large">
-                            <v-icon
-                              :icon="connectionStatusIcon(location.connectionTestLoading ? 'PENDING' : location.connectionStatus)"
-                              start></v-icon>
-                            {{ location.connectionTestLoading ? 'PENDING' : location.connectionStatus }}
-                          </v-chip>
-                        </div>
-                        <p class="text-h5"><span class="text-disabled">Site:</span> {{ location.name }}</p>
-                        <v-divider class="my-2"></v-divider>
-                        <p class="text-h6 my-1"><span class="text-disabled">Address:</span> {{ location.address }}</p>
-                        <p class="text-h6 my-1"><span class="text-disabled">Details:</span> {{ location.description }}
-                        </p>
-                        <p class="text-h6 my-1"><span class="text-disabled">latitude:</span> {{ location.latitude }}</p>
-                        <p class="text-h6 my-1"><span class="text-disabled">longitude:</span> {{ location.longitude }}
-                        </p>
-                        <p class="text-h6 my-1"><span class="text-disabled">Added On:</span> {{ dateFormatter({
-                          dateLike:
-                          location.created}) }}</p>
-                        <p class="text-h6 my-1"><span class="text-disabled">Last updated:</span> {{
-                          dateFormatter({
-                            dateLike:
-                          location.updated}) }}</p>
-                        <p class="text-h6 my-1"><span class="text-disabled">Added By:</span> {{ location.addedByData ?
-                          location.addedByData.username : '' }}</p>
-                      </div>
-                    </v-col>
-                  </v-row>
-                </v-container>
-                <pre>{{ location }}</pre>
-                <v-btn v-if="mobile" block :loading="props.location.connectionTestLoading" variant="tonal"
-                  class="text-none" @click="testDeviceConnection">
-                  <v-icon start>mdi-wifi-marker</v-icon>
-                  Test Connection</v-btn>
+                <LocationMarkerBasicInfo :location="location" :is-fullscreen="fullscreen" :key="componentKey" />
               </v-tabs-window-item>
-
               <v-tabs-window-item value="device" v-if="location.deviceData">
-
                 <v-divider></v-divider>
                 <div class="pa-2">
                   <div class="d-flex align-start px-4">
                     <EditDeviceDataModal :location="location" />
-                    <div>
+                    <div v-if="!location.useRemoteConnection">
                       <p><span class="text-medium-emphasis">IP Address:</span> <span class="font-weight-bold"> {{
                         location.deviceData?.ipAddress }}</span> </p>
                       <p><span class="text-medium-emphasis">Port:</span> <span class="font-weight-bold"> {{
                         location.deviceData?.port }}</span> </p>
                     </div>
+                    <div v-else>
+                      <p><span class="text-medium-emphasis">HTTP:</span> <span class="font-weight-bold"> {{
+                        location.remoteHTTPUrl }}</span> </p>
+                      <p><span class="text-medium-emphasis">TCP:</span> <span class="font-weight-bold"> {{
+                        location.remoteTCPUrl }}</span> </p>
+                    </div>
                     <v-spacer></v-spacer>
-                    <v-btn v-if="!mobile" :disabled="props.location.connectionTestLoading"
+                    <v-btn tile v-if="!mobile" :disabled="props.location.connectionTestLoading"
                       :loading="props.location.connectionTestLoading" variant="tonal" class="text-none"
                       @click="testDeviceConnection">
                       <v-icon start>mdi-wifi-marker</v-icon>
-                      Test Connection</v-btn>
+                      Test</v-btn>
                   </div>
                   <div class="d-flex align-center px-4">
                     <p class="text-medium-emphasis">Connection Status:</p>
                     <v-spacer></v-spacer>
-                    <v-chip v-if="location.connectionStatus" label
+                    <v-chip tile v-if="location.connectionStatus" label
                       :color="connectionStatusColor(location.connectionTestLoading ? 'PENDING' : location.connectionStatus)"
                       variant="tonal">
                       <v-icon
@@ -276,10 +276,22 @@ async function sendCommand() {
                     </p>
                   </div>
                   <div class="pa-2">
-                    <v-btn v-if="mobile" block :loading="location.connectionTestLoading" variant="tonal"
+                    <v-btn tile v-if="mobile" block :loading="location.connectionTestLoading" variant="tonal"
                       class="text-none" @click="testDeviceConnection">
                       <v-icon start>mdi-wifi-marker</v-icon>
                       Test Connection</v-btn>
+                  </div>
+                  <div class="d-flex align-center px-4">
+                    <v-btn @click="toggleLocationLock({ locationId: props.location.id, lock: !props.location.isLocked })" v-if="props.location.isLocked" density="comfortable" icon size="small" color="error" tile variant="plain" class="mr-2">
+                      <v-icon>mdi-lock</v-icon>
+                      <v-tooltip
+                        activator="parent"
+                        location="top"
+                      >Device is Locked</v-tooltip>
+                    </v-btn>
+                    <ConfirmStartMeasurementModal :location="props.location" @start:measurement="startMeasurement" />
+                    <MeasurementParamsModal />
+                    <MeasurementProcessInfoModal />
                   </div>
                 </div>
                 <div class="px-4 py-0">
@@ -296,8 +308,34 @@ async function sendCommand() {
           <v-divider></v-divider>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn text="Close Dialog" @click="isActive.value = false"></v-btn>
+            <ConfirmDeleteModal 
+              modal-title="Confirm Delete?" 
+              :btn-props="{ 
+                text: 'Delete Location Marker', 
+                variant: 'tonal', 
+                color: 'error', 
+                prependIcon: 'mdi-delete' 
+              }" 
+              @confirm="deleteMarker"
+              modal-text="This would delete all records related to this location including <strong>Location Notes</strong>, any <strong>Device Data</strong>, <strong>Measurement Files and Data</strong>, and any other records related to this location." 
+            />
+            <!-- <v-btn prepend-icon="mdi-delete" class="text-capitalize px-3" color="error" text="Delete Location" @click="deleteMarker"></v-btn> -->
+            <v-btn tile prepend-icon="mdi-close" class="text-capitalize px-4" text="Close" @click="isActive.value = false"></v-btn>
           </v-card-actions>
+          <v-overlay
+            :model-value="totalLoading"
+            class="align-center justify-center"
+            contained
+            :opacity="0.5"
+            scrim="white"
+          >
+            <v-progress-circular
+              color="primary"
+              size="64"
+              indeterminate
+              
+            ></v-progress-circular>
+          </v-overlay>
         </v-card>
       </template>
     </v-dialog>

@@ -23,7 +23,6 @@
     return (new URL(`${apiBaseUrl}/api/v1/locations/countries/${props.countryId}/states/${props.stateId}/cities`)).href
   })
   watchDebounced(url, (newVal, oldVal) => {
-    console.log({newVal, oldVal});
     if(newVal !== oldVal){
       selectedCity.value = null
       emit('update:selectedCity', selectedCity.value)

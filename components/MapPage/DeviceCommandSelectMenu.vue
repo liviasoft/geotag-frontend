@@ -22,22 +22,22 @@
 <template>
   <v-card max-height="500">
     <v-card-title class="pa-2">
-      <v-text-field v-model="search" prepend-inner-icon="mdi-filter-variant" placeholder="Filter Commands" hide-details density="compact"
+      <v-text-field tile v-model="search" prepend-inner-icon="mdi-filter-variant" placeholder="Filter Commands" hide-details density="compact"
         variant="solo">
         <template v-slot:append>
-      <v-chip :variant="commandFilter ? 'flat': 'tonal'" :color="commandFilter ? 'orange-darken-4': 'warning'" @click="() => commandFilter = !commandFilter" label class="ml-n2 mr-2">
+      <v-chip tile :variant="commandFilter ? 'flat': 'tonal'" :color="commandFilter ? 'orange-darken-4': 'warning'" @click="() => commandFilter = !commandFilter" label class="ml-n2 mr-2">
         C
         <v-tooltip
           activator="parent"
           location="top"
-        >Tooltip</v-tooltip>
+        >Commands</v-tooltip>
       </v-chip>
-      <v-chip :variant="queryFilter ? 'flat': 'tonal'" :color="queryFilter ? 'purple-darken-4': 'purple'" @click="() => queryFilter = !queryFilter" label>
+      <v-chip tile :variant="queryFilter ? 'flat': 'tonal'" :color="queryFilter ? 'purple-darken-4': 'purple'" @click="() => queryFilter = !queryFilter" label>
         Q
         <v-tooltip
           activator="parent"
           location="top"
-        >Tooltip</v-tooltip>
+        >Queries</v-tooltip>
       </v-chip>
     </template>
       </v-text-field>
@@ -67,7 +67,7 @@
             item.description }}</span>
           </v-list-item-subtitle>
           <template v-slot:append>
-            <v-chip size="small" label :color="item.commandType === 'Query' ? 'purple' : 'warning'">{{
+            <v-chip tile size="small" label :color="item.commandType === 'Query' ? 'purple' : 'warning'">{{
               item.commandType.charAt(0)
             }}
             </v-chip>

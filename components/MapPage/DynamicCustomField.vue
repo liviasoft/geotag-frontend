@@ -29,8 +29,8 @@
 
 <template>
   <div class="d-flex align-center">
-    <v-text-field :value="startValue" variant="outlined" density="compact" hide-details v-if="fieldType === 'Text'" :label="props.fieldName" @update:modelValue="(e: string) => emit('update:fieldValue', {fieldName, value: e})"></v-text-field>
-    <v-text-field :value="startValue" variant="outlined" density="compact" hide-details type="number" v-else-if="fieldType === 'Number'" :label="props.fieldName" @update:modelValue="(e: number) => emit('update:fieldValue', {fieldName, value: e})"></v-text-field>
+    <v-text-field tile :value="startValue" variant="outlined" density="compact" hide-details v-if="fieldType === 'Text'" :label="props.fieldName" @update:modelValue="(e: string) => emit('update:fieldValue', {fieldName, value: e})"></v-text-field>
+    <v-text-field tile :value="startValue" variant="outlined" density="compact" hide-details type="number" v-else-if="fieldType === 'Number'" :label="props.fieldName" @update:modelValue="(e: number) => emit('update:fieldValue', {fieldName, value: e})"></v-text-field>
     <v-switch
       density="compact"
       color="primary"

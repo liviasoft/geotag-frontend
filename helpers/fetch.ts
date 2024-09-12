@@ -26,13 +26,13 @@ export const makeRequest = (requestData: RequestOptions, type: 'JSON' | 'FormDat
         requestOptions.body = body
       }
     }
-    console.log({requestOptions})
+    
     const url = new URL(`${apiBaseUrl}/${path}`).href
     // try {
       fetch(url, {...requestOptions, credentials: 'include'})
       .then(res => res.json())
       .then((response) => {
-        console.log({response})
+        
         if(response.success){
           resolve({response, error: response.error})
         } else {

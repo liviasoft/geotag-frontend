@@ -3,7 +3,7 @@
   //   // fetch and return all "example" records...
   //   const records = await nuxtApp.$pb.collection('users').getFullList();
   //   await nuxtApp.$pb.collection('users').subscribe('*', (data) => {
-  //     console.log({data});
+  //     ;
   //   })
 
   //   return structuredClone(records);

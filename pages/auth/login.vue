@@ -20,7 +20,6 @@
   })
 
   const {query} = useRoute()
-  console.log({query})
   if(query.new){
     toast.success('Signup Successful, please login')
     successMessages.value.push('Signup Successful, please login')
@@ -83,11 +82,10 @@
       url = new URL(`${apiBaseUrl}/api/v1/auth/login/phone`).href
       type = 'Phone'
     }
-    console.log({data})
+    
     try {
       loading.value = true;
       const {response, error} = await authStore.login(data, type)
-      console.log({response});
       if(response.success){
         toast.success(response.message)
         successMessages.value.push(`Login Successful - Welcome back ${response.data.user.username}`)
@@ -164,7 +162,7 @@
         >
           <!-- <v-card-text>{{ text }}{{ item }}</v-card-text> -->
           <div v-if="item=== 'Email'">
-            <v-text-field v-model="emailOrUsername" @keyup.enter="signin" :error="Boolean(errors.emailOrUsername)" @focus="errors.emailOrUsername = ''" placeholder="your.email@example.com" density="compact" prependInnerIcon="mdi-account" label="Email or Username" variant="outlined" class="pt-4"></v-text-field>
+            <v-text-field tile v-model="emailOrUsername" @keyup.enter="signin" :error="Boolean(errors.emailOrUsername)" @focus="errors.emailOrUsername = ''" placeholder="your.email@example.com" density="compact" prependInnerIcon="mdi-account" label="Email or Username" variant="outlined" class="pt-4"></v-text-field>
           </div>
           <div v-else>
             <v-row class="pa-0 pt-4">
@@ -173,7 +171,7 @@
                 <PhoneCodeSelect v-model:selected-country-code="countryCode" />
               </v-col>
               <v-col cols="8" class="flex-shrink-1 flex-grow-0 pb-0">
-                <v-text-field v-model="phone" @keyup.enter="signin" :error="Boolean(errors.phone)" @focus="errors.phone = ''" placeholder="08012345678" type="text" class="mb-2" label="Phone Number" variant="outlined" density="compact"></v-text-field>
+                <v-text-field tile v-model="phone" @keyup.enter="signin" :error="Boolean(errors.phone)" @focus="errors.phone = ''" placeholder="08012345678" type="text" class="mb-2" label="Phone Number" variant="outlined" density="compact"></v-text-field>
               </v-col>
               <!-- v-model="phone" @keydown.enter="addNewContact" -->
             </v-row>
@@ -181,12 +179,12 @@
         </v-card>
       </v-tabs-window-item>
     </v-tabs-window>
-    <v-text-field v-model="password" @keyup.enter="signin" :error="Boolean(errors.password)" @focus="errors.password = ''" placeholder="S5cReT_pA$$w0Rd" density="compact" prependInnerIcon="mdi-lock" label="Password" :type="showPassword ? 'text': 'password'" variant="outlined">
+    <v-text-field tile v-model="password" @keyup.enter="signin" :error="Boolean(errors.password)" @focus="errors.password = ''" placeholder="S5cReT_pA$$w0Rd" density="compact" prependInnerIcon="mdi-lock" label="Password" :type="showPassword ? 'text': 'password'" variant="outlined">
       <template v-slot:append-inner>
         <v-icon style="cursor: pointer" @click="() => showPassword = !showPassword">mdi-eye{{ !showPassword ? '': '-off'  }}</v-icon>
       </template>
     </v-text-field>
-    <v-btn block color="primary" @click="signin" :loading="loading" prependIcon="mdi-login">Sign In</v-btn>
+    <v-btn tile block color="primary" @click="signin" :loading="loading" prependIcon="mdi-login">Sign In</v-btn>
     <div class="d-flex align-center mt-3">
       <p class="font-weight-bold text-primary"><v-icon size="small">mdi-arrow-left-drop-circle</v-icon> Back</p>
       <v-spacer></v-spacer>
@@ -200,7 +198,7 @@
       <v-divider></v-divider>
     </div>
     <NuxtLink to="/auth/register" style="text-decoration: none;">
-      <v-btn block color="secondary" class="mt-4" prepend-icon="mdi-account-plus" >Create An Account</v-btn>
+      <v-btn tile block color="secondary" class="mt-4" prepend-icon="mdi-account-plus" >Create An Account</v-btn>
     </NuxtLink>
     <v-overlay
     :model-value="loading"

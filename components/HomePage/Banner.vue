@@ -17,46 +17,47 @@
         <v-card tile :loading="loading" class="pa-0 d-flex align-center text-center" height="48px" elevation-0>
           <!-- <pre>{{ items }}</pre> -->
           <v-card-text class="pa-0 d-flex align-center">
-          <v-autocomplete
-            appendInnerIcon="mdi-magnify"
-            active
-            prepend
-            hideDetails
-            autoSelectFirst
-            flat
-            density="comfortable"
-            :menu="true"
-            :menuProps="{persistent: true}"
-            prependInnerIcon="mdi-map-marker"
-            v-model:search="keyword"
-            tile
-            @update:modelValue="locationSelected"
-            v-model="selectedLocation"
-            @search="onInput"
-            @input="onInput"
-            returnObject
-            :items="items"
-            itemTitle="name"
-            :loading="loading"
-            @focus="() => query(keyword)"
-            :close-on-content-click="false"
-            itemValue="value"
-            placeholder="Search cities, states, and countries"
-            variant="solo"
-            >
-          <template v-slot:item="{ props, item }">
-            <v-list-item
-              density="compact"
-              v-if="item"
-              :disabled="!keyword"
-              v-bind="props"
-              :prepend-icon="getlocationTypeIcon(item.raw.type)"
-              :subtitle="`${item.raw.type} &middot; ${item.raw.name}${item.raw.state ? ', ' + item.raw.state: ''}${item.raw.country? ', '+item.raw.country: ''}`"
-              :title="`${item.raw.name} ${item.raw.count ? '('+item.raw.count+')': ''}`"
-            ></v-list-item>
-          </template>
-        </v-autocomplete>
-      </v-card-text>
+            <v-combobox
+              appendInnerIcon="mdi-magnify"
+              active
+              prepend
+              hideDetails
+              flat
+              density="comfortable"
+              :menu="true"
+              :menuProps="{persistent: true}"
+              prependInnerIcon="mdi-map-marker"
+              v-model:search="keyword"
+              :key="componentKey"
+              tile
+              v-model="selectedLocation"
+              @update:search="onSearch"
+              returnObject
+              :items="items"
+              itemTitle="name"
+              :loading="loading"
+              :close-on-content-click="false"
+              itemValue="value"
+              clearable
+              :readonly="loading"
+              placeholder="Search cities, states, and countries"
+              variant="solo"
+              >
+              <!-- @input="onInput" -->
+              <!-- @focus="() => query(keyword)" -->
+              <template v-slot:item="{ props, item }">
+                <v-list-item
+                  density="compact"
+                  v-if="item"
+                  :disabled="!keyword"
+                  v-bind="props"
+                  :prepend-icon="getlocationTypeIcon(item.raw.type)"
+                  :subtitle="`${item.raw.type} &middot; ${item.raw.name}${item.raw.state ? ', ' + item.raw.state: ''}${item.raw.country? ', '+item.raw.country: ''}`"
+                  :title="`${item.raw.name} ${item.raw.count ? '('+item.raw.count+')': ''}`"
+                ></v-list-item>
+              </template>
+            </v-combobox>
+          </v-card-text>
           <v-alert v-if="error" type="error">{{ error }}</v-alert>
           
         </v-card>
@@ -74,8 +75,11 @@
     name: string,
     latitude: number,
     longitude: number,
+    type: string,
+    value: string,
   }
   const error = ref(null)
+  const componentKey = ref(0);
   const selectedLocation = ref<LocationSearchResult | null>(null);
   let controller = new AbortController();
   const keyword = ref('');
@@ -91,17 +95,23 @@
     try {
       const res = await fetch(url.value, { signal })
       const data = await res.json()
-      console.log({data})
       items.value = data as unknown as any[];
     } catch (error: any) {
       console.log({error});
     } finally {
       loading.value = false;
+      componentKey.value++
     }
   };
 
+  const onSearch = useDebounceFn(async () => {
+    await query(keyword.value)
+    if(typeof selectedLocation.value === 'object'){
+      await navigateTo(`/map?lat=${selectedLocation.value?.latitude}&lng=${selectedLocation.value?.longitude}${selectedLocation.value?.type === 'Location' ? '&location='+selectedLocation.value?.value:''}`)
+    }
+  }, 1000)
+
   const onInput = useDebounceFn(async () => {
-    console.log(keyword.value)
     await query(keyword.value)
   }, 1000)
   function getlocationTypeIcon(locationType: string){
@@ -127,6 +137,10 @@
     // })
     await navigateTo(`/map?lat=${e.latitude}&lng=${e.longitude}`)
   }
+
+  onMounted(async () => {
+    await query(keyword.value)
+  })
 // watch(keyword, (v) => {
 //   // clearTimeout(timerId)
   

@@ -4,6 +4,7 @@
   import type { SavedLocation, Trace, MeasurementFile, Point as SignalPoint } from '~/types/Locations.types';
   import { useAuthStore } from '~/stores/auth';
   import ChartBuilder from './ChartBuilder.vue';
+  import FileDataTableModal from './FileDataTableModal.vue';
   import { dateFormatter } from '@neoncoder/validator-utils';
 
 // #region
@@ -324,17 +325,16 @@ type Point,
     toast.toastOriginal.promise(makeAuthenticatedRequest({url}), {
       loading: `${props.location.name}: Loading File Data...`,
       success: (data: any) => {
-        console.log({data})
+        
         toast.success(data.response.message);
         traces.value = data.response.data.traces
         // traces.value.forEach((trace, i) => {
         const trace = traces.value[0]
         renderChart(trace)
-        console.log({traces: traces.value, datasets: datasets.value})
         return `${data.response.message ? data.response.message : props.location.name + ': Done processing file'}`
       },
       error: (data: any) => {
-        console.log({data})
+        
         toast.error(data.response.message);
         traces.value = []
         const {response, error, message} = data
@@ -405,7 +405,9 @@ type Point,
                       <!-- {{ isSelected }} -->
                       <v-spacer></v-spacer>
                       <p><span class="text-disabled">Time:</span>{{ dateFormatter({ dateLike: String(trace.measurementFile?.timeStamp) }) }}</p>
-                      <v-btn @click.stop="() => {}" icon variant="text" size="small"><v-icon>mdi-table</v-icon></v-btn>
+                      <!-- TODO: Add Datatable of trace points -->
+                      <FileDataTableModal :trace="trace" />
+                      <!-- <v-btn @click.stop="() => {}" icon variant="text" size="small"><v-icon>mdi-table</v-icon></v-btn> -->
                     </v-card>
                   </v-item>
                 </v-col>

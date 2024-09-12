@@ -81,7 +81,7 @@ import { useDeviceStore } from '~/stores/devices'
     toast.toastOriginal.promise(update.value ? updateDeviceCommand({id: props.selectedDeviceCommand?.id, ...sendData}) : addDeviceCommand(sendData), {
       loading: `${update.value ? 'Updating': 'Adding'} Device Command...`,
       success: (data: any) => {
-        console.log({data})
+        
         if(!update.value && !keep.value) {
           reset()
         }
@@ -93,7 +93,7 @@ import { useDeviceStore } from '~/stores/devices'
         return `Device Command ${update.value ? 'Updated': 'Added'}`
       },
       error: (data: any) => {
-        console.log({data})
+        
         const {response, error, message} = data
         if(response?.error){
           errors.value.command = response.error.command
@@ -122,6 +122,7 @@ import { useDeviceStore } from '~/stores/devices'
 </script>
 <template>
   <v-btn @click="openNew"
+    tile
     block
     prepend-icon="mdi-plus"
     color="warning"
@@ -146,13 +147,13 @@ import { useDeviceStore } from '~/stores/devices'
       <v-card-text>
         <v-row>
           <v-col cols="12">
-            <v-text-field label="Command"
+            <v-text-field tile label="Command"
             v-model="command"
             @keydown.enter="save"
             :error="Boolean(errors.command)"
             @focus="errors.command = ''"
             density="compact" variant="outlined" prepend-inner-icon="mdi-console-line"></v-text-field>
-            <v-text-field label="Title" 
+            <v-text-field tile label="Title" 
             v-model="title"
             @keydown.enter="save"
             :error="Boolean(errors.title)"
@@ -177,7 +178,7 @@ import { useDeviceStore } from '~/stores/devices'
             hide-details variant="outlined" label="Type" :items="['Command', 'Query']"></v-select>
           </v-col>
           <v-col cols="6">
-            <v-text-field v-model="parameters" density="compact" 
+            <v-text-field tile v-model="parameters" density="compact" 
             hide-details
             @keydown.enter="save"
             variant="outlined" label="Parameters"
@@ -186,28 +187,28 @@ import { useDeviceStore } from '~/stores/devices'
           </v-col>
           <v-divider></v-divider>
           <v-col cols="6" class="py-2">
-            <v-text-field label="Query Return" density="compact" 
+            <v-text-field tile label="Query Return" density="compact" 
             v-model="queryReturn"
             @keydown.enter="save"
             hide-details
             variant="outlined"></v-text-field>
           </v-col>
           <v-col cols="6" class="py-2">
-            <v-text-field label="Default Value" density="compact"
+            <v-text-field tile label="Default Value" density="compact"
             v-model="defaultValue" 
             @keydown.enter="save"
             hide-details
             variant="outlined"></v-text-field>
           </v-col>
           <v-col cols="6" class="py-0">
-            <v-text-field label="Default Unit" density="compact"
+            <v-text-field tile label="Default Unit" density="compact"
             v-model="defaultUnit"
             @keydown.enter="save"
             hide-details
             variant="outlined"></v-text-field>
           </v-col>
           <v-col cols="6" class="py-0">
-            <v-text-field label="Range" density="compact"
+            <v-text-field tile label="Range" density="compact"
             v-model="range"
             @keydown.enter="save"
             hide-details
@@ -220,9 +221,11 @@ import { useDeviceStore } from '~/stores/devices'
         <v-switch label="keep" inset color="success" hide-details v-model="keep"></v-switch>
         <v-spacer></v-spacer>
         <v-btn 
+        tile
         @click="close"
         prepend-icon="mdi-close" color="error" variant="text" class="px-4">Cancel</v-btn>
         <v-btn
+          tile
           text="Save"
           class="px-4"
           color="primary"
