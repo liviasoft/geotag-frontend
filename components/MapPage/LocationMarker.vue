@@ -16,6 +16,7 @@ import DeviceCommandSelectMenu from './DeviceCommandSelectMenu.vue'
 import ConfirmDeleteModal from './ConfirmDeleteModal.vue'
 import LocationMarkerBasicInfo from './LocationMarkerBasicInfo.vue'
 import MeasurementParamsModal from './MeasurementParamsModal.vue'
+import MeasurementPlaylist from './MeasurementPlaylist.vue'
 import MeasurementProcessInfoModal from './MeasurementProcessInfoModal.vue'
 import ConfirmStartMeasurementModal from './ConfirmStartMeasurementModal.vue'
 
@@ -51,6 +52,7 @@ const { makeAuthenticatedRequest } = useAuthStore()
 const { connectionStatusColor, connectionStatusIcon } = useUIStore()
 const dialog = ref(false)
 const totalLoading = ref(false)
+const viewMeasurementPlaylist = ref(false)
 function openDialog() {
   dialog.value = true
 }
@@ -83,6 +85,29 @@ async function testDeviceConnection() {
       return `Error: ${data?.response?.message}`
     }
   })
+}
+
+async function inspectForNewFiles(){
+  try {
+    totalLoading.value = true
+    toast.toastOriginal.promise(makeAuthenticatedRequest({ url: `api/v1/files/locations/${props.location.id}/device/new-files`}), {
+      loading: `${props.location.name}: Inspectiving for new measurement files...`,
+      success: (data: any) => {
+        toast.success(`${data?.response?.message ? data.response.message : 'OK'}`)
+        return data?.response?.message ? data.response.message : `New Files: ${props.location.name}`
+      },
+      error: (data: any) => {
+        toast.error(`${data?.response?.message ? data.response.message : 'Error'}`)
+        return data?.response?.message ? data.response.message : 'Error getting Device New Files'
+      },
+      finally: () => {
+        totalLoading.value = false
+      }
+    })
+    console.log({ locationId: props.location.id })
+  } catch (error: any) {
+    console.log({ error });
+  }
 }
 watch([dialog, fullscreen], ([newValue, newFullscreen], [oldValue, oldFullscreen]) => {
   if (newFullscreen !== oldFullscreen) componentKey.value++
@@ -292,7 +317,27 @@ async function startMeasurement(e: any){
                     <ConfirmStartMeasurementModal :location="props.location" @start:measurement="startMeasurement" />
                     <MeasurementParamsModal />
                     <MeasurementProcessInfoModal />
+                    <v-btn @click="viewMeasurementPlaylist = !viewMeasurementPlaylist" density="comfortable" icon size="small" :color="viewMeasurementPlaylist ? 'warning': 'primary'" tile variant="tonal" class="mx-4">
+                      <v-icon>mdi-play-pause</v-icon>
+                      <v-tooltip
+                        activator="parent"
+                        location="top"
+                      >Measurement Playlist</v-tooltip>
+                    </v-btn>
+                    <v-spacer></v-spacer>
+                    <v-btn @click="inspectForNewFiles" class="text-capitalize" prepend-icon="mdi-magnify" variant="tonal" density="compact">
+                      Inspect 
+                      <v-tooltip
+                        activator="parent"
+                        location="top"
+                      >Check Device for new Files</v-tooltip>
+                    </v-btn>
                   </div>
+                  <v-expand-transition>
+                    <div v-show="viewMeasurementPlaylist">
+                      <MeasurementPlaylist :location="props.location" />
+                    </div>
+                  </v-expand-transition>
                 </div>
                 <div class="px-4 py-0">
                   <DeviceMeasurementsDataTable :key="componentKey" :isFullscreen="fullscreen"

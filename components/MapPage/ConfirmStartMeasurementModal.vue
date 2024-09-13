@@ -31,7 +31,7 @@ import { toast } from '@neoncoder/vuetify-sonner';
         },
         error: (data: any) => {
           console.log({data})
-          toast.success(`${props.location.name}: Error Starting Process...`)
+          toast.error(`${props.location.name}: Error Starting Process...`)
           return `${props.location.name}: Error Starting Process...`
         }
       })

@@ -108,11 +108,13 @@ function onMapReady() {
 
 function clearMap(){
   markers.value = []
+  userLocation.value = null
   selectedLocation.value = undefined
 }
 
 async function refreshMap(){
   globalLoader.value = true;
+  
   try {   
     await getSavedLocations()
     await getLocationTypes()
