@@ -85,7 +85,7 @@ type Point,
         display: true,
         type: 'logarithmic',
         min: 0,
-        suggestedMax: 1000
+        suggestedMax: 100
       }
   })
   // const chartOptions = ref({

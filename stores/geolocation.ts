@@ -3,10 +3,12 @@ import { ref, computed } from 'vue';
 import { useFetch } from '@vueuse/core'
 
 export const useGeolocationStore = defineStore('geolocation', () => {
+  const config = useRuntimeConfig();
+  const apiBaseUrl = config.public.API_BASE_URL;
   const searchTerm = ref('')
   const id = ref(1)
   const url = computed(() => {
-    return new URL(`https://localhost:3001/api/v1/locations/${id.value}`).href
+    return new URL(`${apiBaseUrl}/api/v1/locations/${id.value}`).href
   })
   const {isFetching, data, error } = useFetch(url, {refetch: true, })
 
