@@ -90,7 +90,7 @@ async function testDeviceConnection() {
 async function inspectForNewFiles(){
   try {
     totalLoading.value = true
-    toast.toastOriginal.promise(makeAuthenticatedRequest({ url: `api/v1/files/locations/${props.location.id}/device/new-files`}), {
+    toast.toastOriginal.promise(makeAuthenticatedRequest({ url: `api/v1/files/locations/${props.location.id}/device/new-files?process=true`}), {
       loading: `${props.location.name}: Inspecting for new measurement files...`,
       success: (data: any) => {
         toast.success(`${data?.response?.message ? data.response.message : 'OK'}`)
@@ -332,6 +332,7 @@ async function startMeasurement(e: any){
                         location="top"
                       >Check Device for new Files</v-tooltip>
                     </v-btn>
+                    
                   </div>
                   <v-expand-transition>
                     <div v-show="viewMeasurementPlaylist">
