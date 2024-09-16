@@ -93,11 +93,11 @@ if log_state == "0":
 #============Start EMF measurement====================
 
 #set emf measurement units
-inst.write("UNIT:POW DBM/M2")
+inst.write("UNIT:POW DBMV/M")
 time.sleep(0.3)
 
 #set ref level
-inst.write("DISP:WIND:TRAC:Y:SCAL:RLEV -5 DBM/M2")
+inst.write("DISP:WIND:TRAC:Y:SCAL:RLEV 50 DBMV/M")
 inst.wrie("DISP:WIND:TRAC:Y:SCAL:RLEV:OFF 0 DB")
 time.sleep(0.3)
 

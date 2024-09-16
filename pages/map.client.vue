@@ -60,7 +60,9 @@ const mode = ref<TMode>('DEFAULT')
 
 function changeMode(newMode: TMode) {
   console.log(`Changing ${mode.value} => ${newMode}`)
-  if(newMode === 'DEFAULT') selectedLocation.value = undefined
+  if(newMode === 'DEFAULT') {
+    selectedLocation.value = undefined
+  }
   mode.value = newMode
 }
 
@@ -284,7 +286,13 @@ watch([highlightedLocation, locationBrowser], ([newHighlightedLocationValue, new
   }
 })
 
-const polyline = computed(() => [...markers.value, mouseLocation.value])
+const polyline = computed(() => {
+  if (mode.value === 'DEFAULT'){
+    return [...markers.value]
+  } else {
+    return [...markers.value, mouseLocation.value]
+  }
+})
 async function handleLocationCreated() {
   selectedLocation.value = undefined
   toggle('formInputNav', false)

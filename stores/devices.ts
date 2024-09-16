@@ -22,7 +22,7 @@ export const useDeviceStore = defineStore('devices', () => {
     { title: 'Kilohertz (KHz)', value: 'KHZ'},
   ])
   const timeUnits = ref([
-    { title: 'MicroSeconds (MS)', value: 'MS'},
+    { title: 'MilliSeconds (MS)', value: 'MS'},
     { title: 'Seconds (S)', value: 'S'},
     { title: 'Minutes (MIN)', value: 'MIN'},
   ])
@@ -95,9 +95,9 @@ export const useDeviceStore = defineStore('devices', () => {
 
       {message: 'Setting EMF Units and Reference Level'},
       // Set EMF Measurement Units
-      {command: `UNIT:POW DBM/M2`, timeout: 5000},
+      {command: `UNIT:POW DBMV/M`, timeout: 5000},
       // Set Reference Level
-      {command: `DISP:WIND:TRAC:Y:SCAL:RLEV -5 DBM/M2`, timeout: 5000},
+      {command: `DISP:WIND:TRAC:Y:SCAL:RLEV 50 DBMV/M`, timeout: 5000},
       {command: `DISP:WIND:TRAC:Y:SCAL:RLEV:OFF 0 DB`, timeout: 5000},
       // Set Measurement Time
       {message: 'Setting Measurement Time'},

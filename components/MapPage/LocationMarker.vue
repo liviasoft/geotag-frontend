@@ -91,7 +91,7 @@ async function inspectForNewFiles(){
   try {
     totalLoading.value = true
     toast.toastOriginal.promise(makeAuthenticatedRequest({ url: `api/v1/files/locations/${props.location.id}/device/new-files`}), {
-      loading: `${props.location.name}: Inspectiving for new measurement files...`,
+      loading: `${props.location.name}: Inspecting for new measurement files...`,
       success: (data: any) => {
         toast.success(`${data?.response?.message ? data.response.message : 'OK'}`)
         return data?.response?.message ? data.response.message : `New Files: ${props.location.name}`
