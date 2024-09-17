@@ -8,6 +8,7 @@
   const { $fileio } : { $fileio: Socket} = useNuxtApp();
   const authStore = useAuthStore()
   const { makeAuthenticatedRequest } = useAuthStore()
+  const { userRoles } = storeToRefs(authStore)
   const { user } = storeToRefs(authStore);
   const connected = ref(false)
   onMounted(() => {
@@ -254,7 +255,7 @@
               </template>
               <v-list-item-subtitle>
                 <div class="d-flex align-center">
-                  <p class="text-disabled text-caption font-italic">@{{ event.isSystemNote ? 'System-Logs' : event.authorData?.username }} <v-btn v-if="user?.id === event.author" @click="deleteNote(event.id)" size="small" variant="plain" class="text-red text-capitalize mx-2">delete</v-btn></p>
+                  <p class="text-disabled text-caption font-italic">@{{ event.isSystemNote ? 'System-Logs' : event.authorData?.username }} <v-btn v-if="user?.id === event.author || userRoles?.includes('ADMIN')" @click="deleteNote(event.id)" size="small" variant="plain" class="text-red text-capitalize mx-2">delete</v-btn></p>
 
                   <v-spacer></v-spacer>
                   <p class="text-disabled text-caption">{{ dateFormatter({ dateLike: String(event.created)}) }}</p>

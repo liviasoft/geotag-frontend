@@ -68,7 +68,7 @@ async function testDeviceConnection(){
         </span> 
         <v-chip tile v-if="location.connectionStatus" class="my-2 mx-1" size="small" label :color="connectionStatusColor(location.connectionTestLoading ? 'PENDING': location.connectionStatus)" variant="tonal">
           <v-icon :icon="connectionStatusIcon(location.connectionTestLoading ? 'PENDING': location.connectionStatus)" start></v-icon>
-          {{ location.connectionTestLoading ? 'PENDING': location.connectionStatus }}
+          {{ location.connectionTestLoading ? 'PENDING': location.connectionStatus === 'ERROR' ? 'OFFLINE' : location.connectionStatus }}
         </v-chip>
         <v-spacer></v-spacer>
         <v-tooltip text="Run Connection Test">

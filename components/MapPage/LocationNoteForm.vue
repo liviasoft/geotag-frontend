@@ -12,7 +12,7 @@
 
   const { addLocationNote } = useLocationNoteStore()
   const authStore = useAuthStore()
-  const { user } = storeToRefs(authStore);
+  const { user, userRoles } = storeToRefs(authStore);
 
   const loading = ref(false)
   const note = ref('')
@@ -58,9 +58,9 @@
 
         <div class="d-flex" style="width: 100%;">
 
-          <v-text-field tile :loading="loading" @keydown.enter.exact="saveNote" v-model="note"density="compact" hide-details placeholder="Add a note about this location">
+          <v-text-field :readonly="!(userRoles?.includes('ADMIN') || userRoles?.includes('USER'))" tile :loading="loading" @keydown.enter.exact="saveNote" v-model="note"density="compact" hide-details placeholder="Add a note about this location">
             <template v-slot:append>
-              <v-btn tile @click="saveNote" :loading="loading" class="mx-0" variant="tonal" color="primary" appendIcon="mdi-send">
+              <v-btn :disabled="!(userRoles?.includes('ADMIN') || userRoles?.includes('USER'))" tile @click="saveNote" :loading="loading" class="mx-0" variant="tonal" color="primary" appendIcon="mdi-send">
                 Send
               </v-btn>
             </template>

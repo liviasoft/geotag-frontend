@@ -59,7 +59,7 @@ const updateLocationDetails = async (e: any) => {
               <v-icon
                 :icon="connectionStatusIcon(location.connectionTestLoading ? 'PENDING' : location.connectionStatus)"
                 start></v-icon>
-              {{ location.connectionTestLoading ? 'PENDING' : location.connectionStatus }}
+              {{ location.connectionTestLoading ? 'PENDING' : location.connectionStatus === 'ERROR' ? 'OFFLINE' : location.connectionStatus }}
             </v-chip>
           </div>
           <p class="text-h5"><span class="text-disabled">Site:</span> {{ location.name }}</p>

@@ -7,6 +7,7 @@ import { toast } from '@neoncoder/vuetify-sonner';
 
   const { restoreDefaultMeasurementParams } = useDeviceStore()
   const { makeAuthenticatedRequest } = useAuthStore()
+  const { userRoles } = storeToRefs(useAuthStore())
   const { bandResolution, bandResolutionUnit, freqSweepTime, freqSweepTimeUnit, freqUnits, startFreq, startFreqUnit, stopFreq, stopFreqUnit, timeUnits, axisDwellTime, axisDwellTimeUnit, measurementTime, measurementTimeUnit} = storeToRefs(useDeviceStore())
 
   const props = defineProps({

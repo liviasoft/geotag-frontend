@@ -17,6 +17,7 @@ import MapSearchInput from '~/components/MapPage/MapSearchInput.vue';
 
 const { xs, smAndDown } = useDisplay();
 const { getUserIfLoggedIn } = useAuthStore()
+const { userRoles } = storeToRefs(useAuthStore())
 const { getDeviceCommands } = useDeviceStore()
 
 async function getLocations() {
@@ -361,7 +362,7 @@ function clearSearch(){
           </v-card-text>
         </v-card>
         <!-- Menu Open button -->
-        <v-card tile elevation="0" style="position: absolute; bottom: 196px; right: 20px; z-index: 4;" floating>
+        <v-card tile elevation="0" style="position: absolute; bottom: 20px; right: 191px; z-index: 4;" floating>
           <v-card-text class="pa-0 d-flex align-center justify-center" style="width: 48px">
             <v-btn @click="changeMode('POLYGON')" stacked style="height: 36px; width: 36px" class="px-0" tile
               :color="isCurrentMode('POLYGON') ? 'warning' : 'primary'"><v-icon>mdi-vector-triangle</v-icon>
@@ -372,7 +373,7 @@ function clearSearch(){
         <!-- Menu Open button -->
         <v-card tile elevation="0" style="position: absolute; bottom: 240px; right: 20px; z-index: 4;" floating>
           <v-card-text class="pa-0 d-flex align-center justify-center" style="width: 48px">
-            <v-btn @click="changeMode('SELECTOR')" stacked style="height: 36px; width: 36px" class="px-0" tile
+            <v-btn :disabled="!userRoles?.includes('ADMIN')" @click="changeMode('SELECTOR')" stacked style="height: 36px; width: 36px" class="px-0" tile
               :color="isCurrentMode('SELECTOR') ? 'warning' : 'primary'"><v-icon>mdi-cursor-default</v-icon>
               <v-tooltip activator="parent" location="left">Mark / Select Location</v-tooltip>
             </v-btn>
@@ -390,7 +391,7 @@ function clearSearch(){
         <!-- Menu Open button -->
         <v-card tile elevation="0" style="position: absolute; bottom: 64px; right: 20px; z-index: 4;" floating>
           <v-card-text class="pa-0 d-flex align-center justify-center" style="width: 48px">
-            <v-btn @click="toggle('formInputNav')" stacked style="height: 36px; width: 36px" class="px-0" tile
+            <v-btn :disabled="!userRoles?.includes('ADMIN')" @click="toggle('formInputNav')" stacked style="height: 36px; width: 36px" class="px-0" tile
               :color="formInputNav ? 'warning' : 'primary'"><v-icon>mdi-chevron-left</v-icon>
               <v-tooltip activator="parent" location="left">Settings</v-tooltip>
             </v-btn>
@@ -437,7 +438,7 @@ function clearSearch(){
         </v-card>
 
         <!-- Location Browser Toggle Button -->
-        <v-card tile elevation="0" style="position: absolute; bottom: 20px; right: 191px; z-index: 4;" floating>
+        <v-card tile elevation="0" style="position: absolute; bottom: 196px; right: 20px; z-index: 4;" floating>
           <v-card-text class="pa-0 d-flex align-center justify-center" style="width: 48px">
             <v-btn @click="locationBrowser = !locationBrowser" stacked style="height: 36px; width: 36px" class="px-0"
               tile :color="locationBrowser ? 'warning' : 'primary'"><v-icon>{{ isFullscreen ? 'mdi-format-list-text' :

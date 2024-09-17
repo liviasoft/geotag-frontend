@@ -5,7 +5,8 @@ import * as changeCase from 'change-case';
 import { toast } from '@neoncoder/vuetify-sonner';
 import { isValidUrl } from '@neoncoder/validator-utils';
 
-  const {makeAuthenticatedRequest} = useAuthStore();
+  const {makeAuthenticatedRequest } = useAuthStore();
+  const { userRoles } = storeToRefs(useAuthStore())
   const emit = defineEmits(['update:dialog'])
   const props = defineProps({
     location: {
@@ -96,7 +97,7 @@ import { isValidUrl } from '@neoncoder/validator-utils';
 </script>
 
 <template>
-  <v-btn @click="dialog = true" :disabled="props.location.isLocked" tile variant="tonal" class="mr-2" icon><v-icon>mdi-pencil</v-icon>
+  <v-btn @click="dialog = true" :disabled="props.location.isLocked" v-if="userRoles?.includes('ADMIN')" tile variant="tonal" class="mr-2" icon><v-icon>mdi-pencil</v-icon>
     <v-tooltip
         activator="parent"
         location="top"
@@ -119,7 +120,7 @@ import { isValidUrl } from '@neoncoder/validator-utils';
         <v-divider></v-divider>
         <v-card-text class="pb-2">
           <DeviceDetailsForm v-model:ip-address="ipAddress" v-model:port="port" @update:custom-field="updateDeviceCustomField" @delete:custom-field="deleteDeviceCustomField" :ip-address-error="errors.ipAddress" :port-error="errors.port" :device-data="location.deviceData || {}"  />
-          <v-switch v-model="useRemoteConnection" color="primary" density="compact" single-line label="Use Remote Connection" hide-details></v-switch>
+          <v-switch :disabled="!userRoles?.includes('ADMIN')" v-model="useRemoteConnection" color="primary" density="compact" single-line label="Use Remote Connection" hide-details></v-switch>
           <v-text-field v-model="remoteHTTPUrl" :error="errors.remoteHTTPUrl" @focus="errors.remoteHTTPUrl = false" class="my-2" label="Remote HTTP Url" placeholder="http://device-domain.com" hide-details variant="outlined" density="compact" tile></v-text-field>
           <v-text-field v-model="remoteTCPUrl" :error="errors.remoteTCPUrl" @focus="errors.remoteTCPUrl = false" label="Remote TCP Url" placeholder="tcp://tcp-url:port" hide-details variant="outlined" density="compact" tile></v-text-field>
         </v-card-text>

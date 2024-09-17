@@ -100,12 +100,20 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = fetchedUser;
     }
   }
+
+  const userRoles = computed(() => {
+    if(user.value){
+      return user.value.roles?.map(({name}) => name)
+    }
+    return []
+  })
   return {
     user,
     login,
     logout,
     makeAuthenticatedRequest,
     getUserIfLoggedIn,
+    userRoles,
     accessToken,
     refreshToken,
     csrfToken

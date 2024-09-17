@@ -7,7 +7,7 @@ import { useLocationStore } from '~/stores/locations';
 import { useUIStore } from '~/stores/ui';
 import { toast } from '@neoncoder/vuetify-sonner';
 import { useDisplay } from 'vuetify';
-import { dateFormatter } from '@neoncoder/validator-utils';
+import { dateFormatter, maskWithChar } from '@neoncoder/validator-utils';
 import DeviceMeasurementsDataTable from './DeviceMeasurementsDataTable.vue';
 import EditDeviceDataModal from './EditDeviceDataModal.vue'
 import LocationNotes from './LocationNotes.vue'
@@ -49,6 +49,7 @@ const props = defineProps({
 })
 
 const { makeAuthenticatedRequest } = useAuthStore()
+const { userRoles } = storeToRefs(useAuthStore())
 const { connectionStatusColor, connectionStatusIcon } = useUIStore()
 const dialog = ref(false)
 const totalLoading = ref(false)
@@ -232,12 +233,14 @@ async function startMeasurement(e: any){
               <DeviceCommandSelectMenu @command:select="selectCommand" />
             </v-menu>
             <v-text-field tile v-model="commandInput" @keydown.enter.exact="sendCommand"
-              :readonly="loadingCommand || location.connectionStatus !== 'OK' || location.connectionTestLoading"
+              clearable
+              :readonly="loadingCommand || location.connectionStatus !== 'OK' || location.connectionTestLoading || !userRoles?.includes('ADMIN')"
               placeholder="Send Device Command" prepend-inner-icon="mdi-console" hide-details variant="solo"
               density="compact" single-line></v-text-field>
             <v-tooltip text="Send Command">
               <template v-slot:activator="{ props }">
                 <v-btn :loading="loadingCommand" :disabled="loadingCommand || location.connectionStatus !== 'OK'"
+                v-if="userRoles?.includes('ADMIN')"
                   :text="fullscreen ? 'Send Command' : ''" :prepend-icon="fullscreen ? 'mdi-console-line' : undefined"
                   :icon="fullscreen ? undefined : 'mdi-console-line'" @click="sendCommand" v-bind="props" color="primary"
                   variant="tonal" stack tile class="mx-2">
@@ -261,15 +264,15 @@ async function startMeasurement(e: any){
                     <EditDeviceDataModal :location="location" />
                     <div v-if="!location.useRemoteConnection">
                       <p><span class="text-medium-emphasis">IP Address:</span> <span class="font-weight-bold"> {{
-                        location.deviceData?.ipAddress }}</span> </p>
+                         !userRoles?.includes('ADMIN') ? maskWithChar({ str: location.deviceData?.ipAddress, num: 9}) : location.deviceData?.ipAddress }}</span> </p>
                       <p><span class="text-medium-emphasis">Port:</span> <span class="font-weight-bold"> {{
-                        location.deviceData?.port }}</span> </p>
+                         !userRoles?.includes('ADMIN') ? maskWithChar({ str: String(location?.deviceData?.port ?? ""), num: 9}) : location.deviceData?.port }}</span> </p>
                     </div>
                     <div v-else>
                       <p><span class="text-medium-emphasis">HTTP:</span> <span class="font-weight-bold"> {{
-                        location.remoteHTTPUrl }}</span> </p>
+                         !userRoles?.includes('ADMIN') ? maskWithChar({ str: location.remoteHTTPUrl?? '', num: 11, reverse: true}) : location.remoteHTTPUrl }}</span> </p>
                       <p><span class="text-medium-emphasis">TCP:</span> <span class="font-weight-bold"> {{
-                        location.remoteTCPUrl }}</span> </p>
+                         !userRoles?.includes('ADMIN') ? maskWithChar({ str: location.remoteTCPUrl ?? '', num: 11, reverse: true}) : location.remoteTCPUrl }}</span> </p>
                     </div>
                     <v-spacer></v-spacer>
                     <v-btn tile v-if="!mobile" :disabled="props.location.connectionTestLoading"
@@ -287,7 +290,7 @@ async function startMeasurement(e: any){
                       <v-icon
                         :icon="connectionStatusIcon(location.connectionTestLoading ? 'PENDING' : location.connectionStatus)"
                         start></v-icon>
-                      {{ location.connectionTestLoading ? 'PENDING' : location.connectionStatus }}
+                      {{ location.connectionTestLoading ? 'PENDING' : location.connectionStatus === 'ERROR' ? 'OFFLINE' : location.connectionStatus }}
                     </v-chip>
                   </div>
                   <div class="d-flex align-center px-4 mt-2">
@@ -306,7 +309,7 @@ async function startMeasurement(e: any){
                       <v-icon start>mdi-wifi-marker</v-icon>
                       Test Connection</v-btn>
                   </div>
-                  <div class="d-flex align-center px-4">
+                  <div class="d-flex align-center px-4" v-if="userRoles?.includes('ADMIN')">
                     <v-btn @click="toggleLocationLock({ locationId: props.location.id, lock: !props.location.isLocked })" v-if="props.location.isLocked" density="comfortable" icon size="small" color="error" tile variant="plain" class="mr-2">
                       <v-icon>mdi-lock</v-icon>
                       <v-tooltip
@@ -317,7 +320,7 @@ async function startMeasurement(e: any){
                     <ConfirmStartMeasurementModal :location="props.location" @start:measurement="startMeasurement" />
                     <MeasurementParamsModal />
                     <MeasurementProcessInfoModal />
-                    <v-btn @click="viewMeasurementPlaylist = !viewMeasurementPlaylist" density="comfortable" icon size="small" :color="viewMeasurementPlaylist ? 'warning': 'primary'" tile variant="tonal" class="mx-4">
+                    <v-btn :disabled="!userRoles?.includes('ADMIN')" @click="viewMeasurementPlaylist = !viewMeasurementPlaylist" density="comfortable" icon size="small" :color="viewMeasurementPlaylist ? 'warning': 'primary'" tile variant="tonal" class="mx-4">
                       <v-icon>mdi-play-pause</v-icon>
                       <v-tooltip
                         activator="parent"
@@ -325,7 +328,7 @@ async function startMeasurement(e: any){
                       >Measurement Playlist</v-tooltip>
                     </v-btn>
                     <v-spacer></v-spacer>
-                    <v-btn @click="inspectForNewFiles" class="text-capitalize" prepend-icon="mdi-magnify" variant="tonal" density="compact">
+                    <v-btn :disabled="!userRoles?.includes('ADMIN')" @click="inspectForNewFiles" class="text-capitalize" prepend-icon="mdi-magnify" variant="tonal" density="compact">
                       Inspect 
                       <v-tooltip
                         activator="parent"

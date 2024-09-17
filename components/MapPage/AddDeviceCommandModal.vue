@@ -1,8 +1,10 @@
 <script lang="ts" setup>
 import { toast } from '@neoncoder/vuetify-sonner';
 import type { DeviceCommand } from '~/types/Locations.types';
-import { useDeviceStore } from '~/stores/devices'
+import { useDeviceStore } from '~/stores/devices';
+import { useAuthStore } from '~/stores/auth';
   const { addDeviceCommand, updateDeviceCommand, getDeviceCommands } = useDeviceStore()
+  const {userRoles } = storeToRefs(useAuthStore())
   const emit = defineEmits(['update:commandAdded', 'update:commandUpdated', 'update:update', 'update:dialog'])
   const props = defineProps({
     selectedDeviceCommand: {
@@ -130,6 +132,7 @@ import { useDeviceStore } from '~/stores/devices'
     class="mt-2"
     text="Add Command"
     variant="tonal"
+    v-if="userRoles?.includes('ADMIN')"
   >
     
   </v-btn>

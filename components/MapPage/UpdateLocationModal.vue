@@ -13,7 +13,8 @@
     }
   })
   const emit = defineEmits(['update:details'])
-  const { makeAuthenticatedRequest } = useAuthStore()
+  const { makeAuthenticatedRequest, } = useAuthStore()
+  const {userRoles} = storeToRefs(useAuthStore())
   const dialog = ref(false)
   const loading = ref(false)
   const name = ref(props.location.name)
@@ -97,7 +98,7 @@
 
 <template>
   <div class="text-center pa-0">
-    <v-btn @click="dialog = true" tile prepend-icon="mdi-pencil" variant="tonal" color="info" class="text-capitalize">Update Details</v-btn>
+    <v-btn @click="dialog = true" v-if="userRoles?.includes('ADMIN')" tile prepend-icon="mdi-pencil" variant="tonal" color="info" class="text-capitalize">Update Details</v-btn>
     <v-dialog
       v-model="dialog"
       width="auto"

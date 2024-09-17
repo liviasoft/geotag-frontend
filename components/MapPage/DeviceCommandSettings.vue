@@ -2,11 +2,13 @@
   import { ref } from 'vue';
   import AddDeviceCommandModal from './AddDeviceCommandModal.vue'
   import { useDeviceStore } from "~/stores/devices";
+  import { useAuthStore } from "~/stores/auth";
   import type { DeviceCommand } from '~/types/Locations.types';
   import { toast } from '@neoncoder/vuetify-sonner';
 
   const { getDeviceCommands, deleteDeviceCommand } = useDeviceStore()
   const { deviceCommands } = storeToRefs(useDeviceStore())
+  const { userRoles } = storeToRefs(useAuthStore())
 
   const show = ref(false);
   const loading = ref(false);
@@ -121,7 +123,7 @@
                 <p class="text-caption text-black">{{ selectedCommand?.description }}</p>
               </div>
               <v-divider></v-divider>
-              <div class="d-flex align-center mt-2">
+              <div class="d-flex align-center mt-2" v-if="userRoles?.includes('ADMIN')">
                 <v-btn tile @click="deleteCommand" prepend-icon="mdi-delete" class="px-0" variant="text" color="error" size="small">Delete</v-btn>
                 <v-spacer></v-spacer>
                 <v-btn tile @click="editCommand" prepend-icon="mdi-refresh" variant="tonal" color="secondary" size="small">Update</v-btn>

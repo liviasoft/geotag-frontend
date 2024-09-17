@@ -1,6 +1,8 @@
 <script lang="ts" setup>
   import { toast } from '@neoncoder/vuetify-sonner';
   const config = useRuntimeConfig()
+  import { useAuthStore } from '~/stores/auth';
+  const {userRoles} = storeToRefs(useAuthStore());
   const props = defineProps({
     locationId: {
       type: String,
@@ -65,7 +67,7 @@
 
 <template>
   <div class="text-center pa-0">
-    <v-btn tile @click="dialog = true" prepend-icon="mdi-camera" variant="tonal" color="green" class="text-capitalize mx-4">Update Image</v-btn>
+    <v-btn v-if="userRoles?.includes('ADMIN')" tile @click="dialog = true" prepend-icon="mdi-camera" variant="tonal" color="green" class="text-capitalize mx-4">Update Image</v-btn>
 
     <v-dialog
       v-model="dialog"

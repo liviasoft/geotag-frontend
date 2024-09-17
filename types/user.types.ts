@@ -8,6 +8,16 @@ export type User = {
   phoneData?: {[key: string]: any};
   avatar: string | null;
   avatarUrl: string | null;
+  roles?: UserRole[];
   created: Date;
   updated: Date | null;
+}
+
+export type UserRole = {
+  id: string;
+  name: string;
+  isDefault: boolean;
+  active: boolean;
+  requiresAuth: boolean;
+  description: string | null;
 }

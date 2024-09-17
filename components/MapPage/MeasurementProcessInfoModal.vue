@@ -1,6 +1,9 @@
 <script lang="ts" setup>
   import { ref } from 'vue' ;
   import { useDeviceStore } from '~/stores/devices';
+  import { useAuthStore } from '~/stores/auth';
+
+  const { userRoles } = storeToRefs(useAuthStore());
 
   const {restoreDefaultMeasurementParams} = useDeviceStore()
   const { bandResolution, bandResolutionUnit, freqSweepTime, freqSweepTimeUnit, freqUnits, startFreq, startFreqUnit, stopFreq, stopFreqUnit, timeUnits, axisDwellTime, axisDwellTimeUnit, measurementTime, measurementTimeUnit} = storeToRefs(useDeviceStore())
@@ -10,7 +13,7 @@
 
 <template>
   <div class="text-center pa-0">
-    <v-btn @click="dialog = true" icon tile density="compact" variant="tonal" color="primary"><v-icon>mdi-information-variant</v-icon>
+    <v-btn :disabled="!userRoles?.includes('ADMIN')" @click="dialog = true" icon tile density="compact" variant="tonal" color="primary"><v-icon>mdi-information-variant</v-icon>
       <v-tooltip activator="parent"
         location="top">
         Process Information
