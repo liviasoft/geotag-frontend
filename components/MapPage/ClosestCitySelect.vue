@@ -18,7 +18,7 @@
   const nearestCities = ref<Array<NearbyCity>>([])
   const loading = ref(false);
   const url = computed(() => {
-    return new URL(`${apiBaseUrl}/api/v1/locations/nearest-cities?lat=${props.lat}&lng=${props.lng}&limit=10`).href
+    return new URL(`${apiBaseUrl}/api/v1/locations/nearest-cities?lat=${props.lat}&lng=${props.lng}&limit=50`).href
   })
   const query = async () => {
     if (loading.value) return;
