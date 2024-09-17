@@ -62,6 +62,7 @@ function changeMode(newMode: TMode) {
   console.log(`Changing ${mode.value} => ${newMode}`)
   if(newMode === 'DEFAULT') {
     selectedLocation.value = undefined
+    toggle('formInputNav', false)
   }
   mode.value = newMode
 }
@@ -112,6 +113,7 @@ function clearMap(){
   markers.value = []
   userLocation.value = null
   selectedLocation.value = undefined
+  toggle('formInputNav', false)
 }
 
 async function refreshMap(){
