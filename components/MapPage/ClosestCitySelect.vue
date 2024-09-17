@@ -22,7 +22,7 @@
   //   return new URL(`${apiBaseUrl}/api/v1/locations/nearest-cities?lat=${props.lat}&lng=${props.lng}&limit=10`).href
   // })
   const url = computed(() => {
-    return `api/v1/locations/nearest-cities?lat=${props.lat}&lng=${props.lng}&limit=10`
+    return `api/v1/locations/nearest-cities?lat=${props.lat}&lng=${props.lng}&limit=50`
   })
   const query = async () => {
     if (loading.value) return;
